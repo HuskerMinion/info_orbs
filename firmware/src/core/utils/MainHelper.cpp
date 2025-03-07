@@ -284,11 +284,31 @@ void MainHelper::handleEndpointDownloadFile() {
     }
 }
 
-void MainHelper::handleEndpointFetchFilesFromURL() {
+void MainHelper::handleEndpointFetchFilesFromURL(bool apiMode) {
+    Log.noticeln("Fetch files from URL (apiMode=%d)", apiMode);
+    if (apiMode) {
+        // We need CORS for API mode
+        s_wifiManager->server->sendHeader(HTTP_HEAD_CORS, HTTP_HEAD_CORS_ALLOW_ALL);
+    }
     String url = s_wifiManager->server->arg("url");
-    String currentDir = s_wifiManager->server->arg("dir");
+    String currentDir;
+    if (apiMode) {
+        int customClockNo = s_wifiManager->server->arg("customClockNo").toInt();
+        if (customClockNo >= 0 && customClockNo < USE_CLOCK_CUSTOM) {
+            // Valid
+            currentDir = "/CustomClock" + String(customClockNo) + "/";
+        } else {
+            s_wifiManager->server->send(500, "text/plain", "Invalid CustomClock number");
+        }
+    } else {
+        currentDir = s_wifiManager->server->arg("dir");
+    }
     if (url == "" || currentDir == "") {
-        s_wifiManager->server->send(400, "text/html", "<h2>Invalid URL or directory</h2>");
+        if (apiMode) {
+            s_wifiManager->server->send(500, "text/plain", "Invalid URL or directory");
+        } else {
+            s_wifiManager->server->send(500, "text/html", "<h2>Invalid URL or directory</h2>");
+        }
         return;
     }
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
@@ -327,6 +347,7 @@ void MainHelper::handleEndpointFetchFilesFromURL() {
 
                     Log.noticeln("Downloaded: %s (%d)", fileName.c_str(), file.size());
                     file.close();
+                    watchdogReset(); // Kick the Watchdog after every download
                 } else {
                     Log.errorln("Failed to open file for writing: %s", filePath.c_str());
                 }
@@ -340,12 +361,24 @@ void MainHelper::handleEndpointFetchFilesFromURL() {
         }
     }
 
-    s_wifiManager->server->send(200, "text/html", "<h2>Files downloaded successfully!</h2><a href='/browse?dir=" + currentDir + "'>Back to file list</a>");
+    if (apiMode) {
+        s_wifiManager->server->send(200, "text/plain", "Success");
+    } else {
+        s_wifiManager->server->send(200, "text/html", "<h2>Files downloaded successfully!</h2><a href='/browse?dir=" + currentDir + "'>Back to file list</a>");
+    }
 
     // Update ClockWidget (we might be showing the changed custom clock)
     if (s_widgetSet->getCurrent()->getName() == "Clock") {
         s_widgetSet->setClearScreensOnDrawCurrent();
     }
+}
+
+void MainHelper::handleEndpointFetchFilesFromURLManual() {
+    handleEndpointFetchFilesFromURL(false);
+}
+
+void MainHelper::handleEndpointFetchFilesFromURLApi() {
+    handleEndpointFetchFilesFromURL(true);
 }
 
 void MainHelper::handleEndpointUploadFile() {
@@ -414,16 +447,40 @@ void MainHelper::handleEndpointDeleteFile() {
     }
 }
 
+void MainHelper::handleEndpointCors() {
+    Log.noticeln("CORS request");
+    s_wifiManager->server->sendHeader(HTTP_HEAD_CORS, HTTP_HEAD_CORS_ALLOW_ALL);
+    s_wifiManager->server->sendHeader("Access-Control-Allow-Headers", "content-type");
+    s_wifiManager->server->send(200, "text/plain", "OK");
+}
+
+void MainHelper::handleEndpointPing() {
+    Log.noticeln("Ping request");
+    s_wifiManager->server->sendHeader(HTTP_HEAD_CORS, HTTP_HEAD_CORS_ALLOW_ALL);
+    String status = "{";
+    status += "\"status\": \"OK\"";
+    status += ", \"millis\": " + String(millis());
+    status += ", \"customClocks\": " + String(USE_CLOCK_CUSTOM);
+    status += "}";
+    s_wifiManager->server->send(200, "application/json", status);
+}
+
 void MainHelper::setupWebPortalEndpoints() {
     // To simulate button presses call e.g. http://<ip>/button?name=right&state=short
     s_wifiManager->server->on("/button", handleEndpointButton);
     s_wifiManager->server->on("/buttons", handleEndpointButtons);
     s_wifiManager->server->on("/browse", HTTP_GET, handleEndpointListFiles);
     s_wifiManager->server->on("/download", HTTP_GET, handleEndpointDownloadFile);
-    s_wifiManager->server->on("/fetchFromUrl", HTTP_POST, handleEndpointFetchFilesFromURL);
+    s_wifiManager->server->on("/fetchFromUrl", HTTP_POST, handleEndpointFetchFilesFromURLManual);
     s_wifiManager->server->on(
         "/upload", HTTP_POST, [] { s_wifiManager->server->send(200, "text/html", "<h2>File uploaded successfully!</h2><a href='/browse?dir=" + s_wifiManager->server->arg("dir") + "'>Back to file list</a>"); }, handleEndpointUploadFile);
     s_wifiManager->server->on("/delete", HTTP_GET, handleEndpointDeleteFile);
+
+    // Enable API functions (can be called from anywhere, e.g. the public ClockRepo)
+    s_wifiManager->server->on("/fetchFromUrlByApi", HTTP_OPTIONS, handleEndpointCors); // CORS
+    s_wifiManager->server->on("/fetchFromUrlByApi", HTTP_POST, handleEndpointFetchFilesFromURLApi);
+    s_wifiManager->server->on("/ping", HTTP_OPTIONS, handleEndpointCors); // CORS
+    s_wifiManager->server->on("/ping", HTTP_GET, handleEndpointPing);
 }
 
 void MainHelper::showWelcome() {

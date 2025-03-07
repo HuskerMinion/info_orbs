@@ -73,7 +73,11 @@ public:
     static void handleEndpointUploadFile();
     static void handleEndpointDeleteFile();
     static void handleEndpointDownloadFile();
-    static void handleEndpointFetchFilesFromURL();
+    static void handleEndpointFetchFilesFromURL(bool apiMode);
+    static void handleEndpointFetchFilesFromURLManual();
+    static void handleEndpointFetchFilesFromURLApi();
+    static void handleEndpointCors();
+    static void handleEndpointPing();
 
     static void restartIfNecessary();
 
