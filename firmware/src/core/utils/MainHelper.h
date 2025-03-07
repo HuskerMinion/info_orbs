@@ -73,9 +73,9 @@ public:
     static void handleEndpointUploadFile();
     static void handleEndpointDeleteFile();
     static void handleEndpointDownloadFile();
-    static void handleEndpointFetchFilesFromURL(bool apiMode);
-    static void handleEndpointFetchFilesFromURLManual();
-    static void handleEndpointFetchFilesFromURLApi();
+    static void handleEndpointFetchFilesFromURL();
+    static void handleEndpointFetchFilesFromClockRepo();
+    static bool handleEndpointFetchFilesFromURLAction(String directory, String url, bool showProgress = false);
     static void handleEndpointCors();
     static void handleEndpointPing();
 

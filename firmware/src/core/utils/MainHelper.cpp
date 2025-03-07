@@ -284,49 +284,33 @@ void MainHelper::handleEndpointDownloadFile() {
     }
 }
 
-void MainHelper::handleEndpointFetchFilesFromURL(bool apiMode) {
-    Log.noticeln("Fetch files from URL (apiMode=%d)", apiMode);
-    if (apiMode) {
-        // We need CORS for API mode
-        s_wifiManager->server->sendHeader(HTTP_HEAD_CORS, HTTP_HEAD_CORS_ALLOW_ALL);
+bool MainHelper::handleEndpointFetchFilesFromURLAction(String directory, String url, bool showProgress) {
+    Log.noticeln("Fetching files from URL: %s, Directory: %s", url.c_str(), directory.c_str());
+    if (showProgress) {
+        s_screenManager->setFont(DEFAULT_FONT);
+        s_screenManager->clearAllScreens();
+        s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
+        s_screenManager->selectScreen(0);
+        s_screenManager->drawCentreString("Downloading", ScreenCenterX, ScreenCenterY, 20);
+        s_screenManager->selectScreen(1);
+        s_screenManager->drawCentreString("ClockFace", ScreenCenterX, ScreenCenterY, 20);
+        s_screenManager->selectScreen(2);
+        s_screenManager->drawCentreString("from Repo", ScreenCenterX, ScreenCenterY, 20);
     }
-    String url = s_wifiManager->server->arg("url");
-    String currentDir;
-    if (apiMode) {
-        int customClockNo = s_wifiManager->server->arg("customClockNo").toInt();
-        if (customClockNo >= 0 && customClockNo < USE_CLOCK_CUSTOM) {
-            // Valid
-            currentDir = "/CustomClock" + String(customClockNo) + "/";
-        } else {
-            s_wifiManager->server->send(500, "text/plain", "Invalid CustomClock number");
-        }
-    } else {
-        currentDir = s_wifiManager->server->arg("dir");
-    }
-    if (url == "" || currentDir == "") {
-        if (apiMode) {
-            s_wifiManager->server->send(500, "text/plain", "Invalid URL or directory");
-        } else {
-            s_wifiManager->server->send(500, "text/html", "<h2>Invalid URL or directory</h2>");
-        }
-        return;
-    }
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        url = "https://" + url;
-    }
-    if (url.startsWith("https://github.com")) {
-        // Replace GitHub URLs
-        url.replace("github.com", "raw.githubusercontent.com");
-        url.replace("tree", "refs/heads");
-    }
-
     // Download files 0.jpg to 11.jpg
+    bool success = true;
     for (int i = 0; i <= 11; i++) {
         String fileName = String(i) + ".jpg";
-        String filePath = currentDir + fileName;
+        String filePath = directory;
+        if (!filePath.endsWith("/")) {
+            filePath += "/";
+        }
+        filePath += fileName;
         String fileUrl = url + "/" + fileName;
 
         Log.noticeln("Downloading %s to %s", fileUrl.c_str(), filePath.c_str());
+        s_screenManager->clearScreen(4);
+        s_screenManager->drawCentreString(fileName, ScreenCenterX, ScreenCenterY, 20);
 
         HTTPClient http;
         // Initialize HTTP connection
@@ -350,35 +334,81 @@ void MainHelper::handleEndpointFetchFilesFromURL(bool apiMode) {
                     watchdogReset(); // Kick the Watchdog after every download
                 } else {
                     Log.errorln("Failed to open file for writing: %s", filePath.c_str());
+                    success = false;
+                    break;
                 }
             } else {
                 Log.errorln("Failed to download: %s (HTTP Code: %d)", fileUrl.c_str(), httpCode);
+                success = false;
+                break;
             }
 
             http.end();
         } else {
             Log.errorln("Failed to initialize HTTP connection for: %s", fileUrl.c_str());
+            success = false;
+            break;
         }
     }
-
-    if (apiMode) {
-        s_wifiManager->server->send(200, "text/plain", "Success");
-    } else {
-        s_wifiManager->server->send(200, "text/html", "<h2>Files downloaded successfully!</h2><a href='/browse?dir=" + currentDir + "'>Back to file list</a>");
-    }
-
-    // Update ClockWidget (we might be showing the changed custom clock)
-    if (s_widgetSet->getCurrent()->getName() == "Clock") {
+    if (showProgress) {
+        // We messed with the screen
+        // Force redraw
+        s_widgetSet->setClearScreensOnDrawCurrent();
+    } else if (s_widgetSet->getCurrent()->getName() == "Clock") {
+        // Update ClockWidget (we might be showing the changed custom clock)
         s_widgetSet->setClearScreensOnDrawCurrent();
     }
+
+    return success;
 }
 
-void MainHelper::handleEndpointFetchFilesFromURLManual() {
-    handleEndpointFetchFilesFromURL(false);
+void MainHelper::handleEndpointFetchFilesFromURL() {
+    String url = s_wifiManager->server->arg("url");
+    String currentDir;
+    currentDir = s_wifiManager->server->arg("dir");
+    if (url == "" || currentDir == "") {
+        s_wifiManager->server->send(500, "text/html", "<h2>Invalid URL or directory</h2>");
+        return;
+    }
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+        url = "https://" + url;
+    }
+    if (url.startsWith("https://github.com")) {
+        // Replace GitHub URLs
+        url.replace("github.com", "raw.githubusercontent.com");
+        url.replace("tree", "refs/heads");
+    }
+
+    const bool success = handleEndpointFetchFilesFromURLAction(currentDir, url, true);
+
+    if (success) {
+        s_wifiManager->server->send(200, "text/html", "<h2>Files downloaded successfully!</h2><a href='/browse?dir=" + currentDir + "'>Back to file list</a>");
+    } else {
+        s_wifiManager->server->send(500, "text/html", "<h2>Failed to download files!</h2><a href='/browse?dir=" + currentDir + "'>Back to file list</a>");
+    }
 }
 
-void MainHelper::handleEndpointFetchFilesFromURLApi() {
-    handleEndpointFetchFilesFromURL(true);
+void MainHelper::handleEndpointFetchFilesFromClockRepo() {
+    String url = s_wifiManager->server->arg("url");
+    int customClock = s_wifiManager->server->arg("customClock").toInt();
+    Log.noticeln("Fetch files from ClockRepo URL: %s, CustomClock: %d", url.c_str(), customClock);
+    bool success = false;
+    if (customClock >= 0 && customClock < USE_CLOCK_CUSTOM) {
+        // Valid
+        String html = WEBPORTAL_FETCHFROMREPO_HTML_START;
+        html += WEBPORTAL_FETCHFROMREPO_STYLE;
+        html += WEBPORTAL_FETCHFROMREPO_SCRIPT;
+        html += WEBPORTAL_FETCHFROMREPO_BODY_START;
+        String dir = "/CustomClock" + String(customClock) + "/";
+        html += "<div>Current Directory: " + dir + "/</div>";
+        html += WEBPORTAL_FETCHFROMREPO_HTML_END;
+        s_wifiManager->server->send(200, "text/html", html);
+        success = handleEndpointFetchFilesFromURLAction(dir, url, true);
+    } else {
+        Log.errorln("Invalid CustomClock number: %d, max allowed is %d", customClock, USE_CLOCK_CUSTOM - 1);
+        s_wifiManager->server->send(500, "text/plain", "Invalid CustomClock number");
+    }
+    Log.noticeln("Fetch files from ClockRepo URL: %s, CustomClock: %d, Success: %d", url.c_str(), customClock, success);
 }
 
 void MainHelper::handleEndpointUploadFile() {
@@ -471,14 +501,13 @@ void MainHelper::setupWebPortalEndpoints() {
     s_wifiManager->server->on("/buttons", handleEndpointButtons);
     s_wifiManager->server->on("/browse", HTTP_GET, handleEndpointListFiles);
     s_wifiManager->server->on("/download", HTTP_GET, handleEndpointDownloadFile);
-    s_wifiManager->server->on("/fetchFromUrl", HTTP_POST, handleEndpointFetchFilesFromURLManual);
+    s_wifiManager->server->on("/fetchFromUrl", HTTP_POST, handleEndpointFetchFilesFromURL);
     s_wifiManager->server->on(
         "/upload", HTTP_POST, [] { s_wifiManager->server->send(200, "text/html", "<h2>File uploaded successfully!</h2><a href='/browse?dir=" + s_wifiManager->server->arg("dir") + "'>Back to file list</a>"); }, handleEndpointUploadFile);
     s_wifiManager->server->on("/delete", HTTP_GET, handleEndpointDeleteFile);
 
     // Enable API functions (can be called from anywhere, e.g. the public ClockRepo)
-    s_wifiManager->server->on("/fetchFromUrlByApi", HTTP_OPTIONS, handleEndpointCors); // CORS
-    s_wifiManager->server->on("/fetchFromUrlByApi", HTTP_POST, handleEndpointFetchFilesFromURLApi);
+    s_wifiManager->server->on("/fetchFromClockRepo", HTTP_GET, handleEndpointFetchFilesFromClockRepo);
     s_wifiManager->server->on("/ping", HTTP_OPTIONS, handleEndpointCors); // CORS
     s_wifiManager->server->on("/ping", HTTP_GET, handleEndpointPing);
 }

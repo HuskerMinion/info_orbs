@@ -376,4 +376,36 @@ const char WEBPORTAL_BROWSE_HTML_END[] = R"(
 </html>
 )";
 
+const char WEBPORTAL_FETCHFROMREPO_HTML_START[] = R"(
+<html>
+<head>
+)";
+
+const char WEBPORTAL_FETCHFROMREPO_STYLE[] = R"(
+<style>
+    body { background: #060606; color: #fff; font-family: verdana; padding: 20px; }
+    .container { max-width: 800px; margin: auto; background: #111; padding: 20px; border-radius: 8px; box-shadow: 0 0 10px rgba(0, 0, 0, 0.1); }
+</style>
+)";
+
+const char WEBPORTAL_FETCHFROMREPO_SCRIPT[] = R"(
+<script>
+    window.close();
+</script>
+)";
+
+const char WEBPORTAL_FETCHFROMREPO_BODY_START[] = R"(
+</head>
+<body>
+    <div class='container' id='container'>
+        <h2>Installing Clock from Repo in Background</h2>
+        <div>You can close this window now!</div>
+)";
+
+const char WEBPORTAL_FETCHFROMREPO_HTML_END[] = R"(
+    </div>
+</body>
+</html>
+)";
+
 #endif // ORBS_WIFI_MANAGER_CONFIG_H
