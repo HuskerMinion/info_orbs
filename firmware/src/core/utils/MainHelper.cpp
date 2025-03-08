@@ -406,7 +406,9 @@ void MainHelper::handleEndpointFetchFilesFromClockRepo() {
         success = handleEndpointFetchFilesFromURLAction(dir, url, true);
     } else {
         Log.errorln("Invalid CustomClock number: %d, max allowed is %d", customClock, USE_CLOCK_CUSTOM - 1);
-        s_wifiManager->server->send(500, "text/plain", "Invalid CustomClock number");
+        String message = "Invalid CustomClock number " + String(customClock) + ", max allowed is " + String(USE_CLOCK_CUSTOM - 1);
+        message += "\nIncrease USE_CLOCK_CUSTOM if necessary!";
+        s_wifiManager->server->send(500, "text/plain", message);
     }
     Log.noticeln("Fetch files from ClockRepo URL: %s, CustomClock: %d, Success: %d", url.c_str(), customClock, success);
 }
