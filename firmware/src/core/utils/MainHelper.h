@@ -77,7 +77,7 @@ public:
     static void handleEndpointFetchFilesFromClockRepo();
     static bool handleEndpointFetchFilesFromURLAction(
         const String &directory, const String &url, bool showProgress = false,
-        const String &clockName = "", const String &authorName = "");
+        int customClock = -1, const String &clockName = "", const String &authorName = "");
     static void handleEndpointCors();
     static void handleEndpointPing();
 
