@@ -295,10 +295,15 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(
         s_screenManager->selectScreen(0);
         s_screenManager->drawCentreString("Downloading", ScreenCenterX, ScreenCenterY, 22);
         s_screenManager->selectScreen(1);
+        s_screenManager->drawCentreString("Clockface", ScreenCenterX, ScreenCenterY, 22);
+        s_screenManager->selectScreen(2);
         if (!clockName.isEmpty()) {
             if (!authorName.isEmpty()) {
+                s_screenManager->setFontColor(TFT_DARKGREEN, TFT_BLACK);
                 s_screenManager->drawCentreString(clockName, ScreenCenterX, ScreenCenterY - 40, 22);
+                s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
                 s_screenManager->drawCentreString("by", ScreenCenterX, ScreenCenterY, 18);
+                s_screenManager->setFontColor(TFT_RED, TFT_BLACK);
                 s_screenManager->drawCentreString(authorName, ScreenCenterX, ScreenCenterY + 40, 22);
             } else {
                 s_screenManager->drawCentreString(clockName, ScreenCenterX, ScreenCenterY, 22);
@@ -306,24 +311,28 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(
         } else {
             s_screenManager->drawCentreString("ClockFace", ScreenCenterX, ScreenCenterY, 22);
         }
-
-        s_screenManager->selectScreen(2);
+        s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
+        s_screenManager->selectScreen(3);
         s_screenManager->drawCentreString("from Repo", ScreenCenterX, ScreenCenterY, 22);
     }
     // Download files 0.jpg to 11.jpg
     bool success = true;
+    String outputDir = directory;
+    if (!outputDir.endsWith("/")) {
+        outputDir += "/";
+    }
     for (int i = 0; i <= 11; i++) {
         String fileName = String(i) + ".jpg";
-        String filePath = directory;
-        if (!filePath.endsWith("/")) {
-            filePath += "/";
-        }
-        filePath += fileName;
+        String filePathTemp = outputDir + fileName + ".tmp";
         String fileUrl = url + "/" + fileName;
 
-        Log.noticeln("Downloading %s to %s", fileUrl.c_str(), filePath.c_str());
-        s_screenManager->clearScreen(4);
-        s_screenManager->drawCentreString(fileName, ScreenCenterX, ScreenCenterY, 24);
+        Log.noticeln("Downloading %s to %s", fileUrl.c_str(), filePathTemp.c_str());
+        if (showProgress) {
+            s_screenManager->clearScreen(4);
+            // progress message
+            String msg = String(i) + "/11";
+            s_screenManager->drawCentreString(msg, ScreenCenterX, ScreenCenterY, 24);
+        }
 
         HTTPClient http;
         // Initialize HTTP connection
@@ -331,7 +340,7 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(
             int httpCode = http.GET();
 
             if (httpCode == HTTP_CODE_OK) {
-                File file = LittleFS.open(filePath, "w");
+                File file = LittleFS.open(filePathTemp, "w");
                 if (file) {
                     // Read data from the HTTP stream and write it to the file
                     Stream &stream = http.getStream();
@@ -346,7 +355,7 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(
                     file.close();
                     watchdogReset(); // Kick the Watchdog after every download
                 } else {
-                    Log.errorln("Failed to open file for writing: %s", filePath.c_str());
+                    Log.errorln("Failed to open file for writing: %s", filePathTemp.c_str());
                     success = false;
                     break;
                 }
@@ -361,6 +370,21 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(
             Log.errorln("Failed to initialize HTTP connection for: %s", fileUrl.c_str());
             success = false;
             break;
+        }
+    }
+
+    for (int i = 0; i <= 11; i++) {
+        String fileName = String(i) + ".jpg";
+        String filePath = outputDir + fileName;
+        String filePathTemp = filePath + ".tmp";
+        if (success) {
+            // Rename files
+            Log.noticeln("Renaming %s to %s", filePathTemp.c_str(), filePath.c_str());
+            LittleFS.rename(filePathTemp, filePath);
+        } else {
+            // Remove files
+            Log.warningln("Removing %s", filePathTemp.c_str());
+            LittleFS.remove(filePathTemp);
         }
     }
     if (showProgress) {
