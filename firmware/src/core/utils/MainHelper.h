@@ -75,7 +75,9 @@ public:
     static void handleEndpointDownloadFile();
     static void handleEndpointFetchFilesFromURL();
     static void handleEndpointFetchFilesFromClockRepo();
-    static bool handleEndpointFetchFilesFromURLAction(String directory, String url, bool showProgress = false);
+    static bool handleEndpointFetchFilesFromURLAction(
+        const String &directory, const String &url, bool showProgress = false,
+        const String &clockName = "", const String &authorName = "");
     static void handleEndpointCors();
     static void handleEndpointPing();
 

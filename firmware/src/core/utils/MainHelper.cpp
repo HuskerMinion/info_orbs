@@ -284,18 +284,31 @@ void MainHelper::handleEndpointDownloadFile() {
     }
 }
 
-bool MainHelper::handleEndpointFetchFilesFromURLAction(String directory, String url, bool showProgress) {
+bool MainHelper::handleEndpointFetchFilesFromURLAction(
+    const String &directory, const String &url, const bool showProgress,
+    const String &clockName, const String &authorName) {
     Log.noticeln("Fetching files from URL: %s, Directory: %s", url.c_str(), directory.c_str());
     if (showProgress) {
         s_screenManager->setFont(DEFAULT_FONT);
         s_screenManager->clearAllScreens();
         s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
         s_screenManager->selectScreen(0);
-        s_screenManager->drawCentreString("Downloading", ScreenCenterX, ScreenCenterY, 20);
+        s_screenManager->drawCentreString("Downloading", ScreenCenterX, ScreenCenterY, 22);
         s_screenManager->selectScreen(1);
-        s_screenManager->drawCentreString("ClockFace", ScreenCenterX, ScreenCenterY, 20);
+        if (!clockName.isEmpty()) {
+            if (!authorName.isEmpty()) {
+                s_screenManager->drawCentreString(clockName, ScreenCenterX, ScreenCenterY - 40, 22);
+                s_screenManager->drawCentreString("by", ScreenCenterX, ScreenCenterY, 18);
+                s_screenManager->drawCentreString(authorName, ScreenCenterX, ScreenCenterY + 40, 22);
+            } else {
+                s_screenManager->drawCentreString(clockName, ScreenCenterX, ScreenCenterY, 22);
+            }
+        } else {
+            s_screenManager->drawCentreString("ClockFace", ScreenCenterX, ScreenCenterY, 22);
+        }
+
         s_screenManager->selectScreen(2);
-        s_screenManager->drawCentreString("from Repo", ScreenCenterX, ScreenCenterY, 20);
+        s_screenManager->drawCentreString("from Repo", ScreenCenterX, ScreenCenterY, 22);
     }
     // Download files 0.jpg to 11.jpg
     bool success = true;
@@ -310,7 +323,7 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(String directory, String 
 
         Log.noticeln("Downloading %s to %s", fileUrl.c_str(), filePath.c_str());
         s_screenManager->clearScreen(4);
-        s_screenManager->drawCentreString(fileName, ScreenCenterX, ScreenCenterY, 20);
+        s_screenManager->drawCentreString(fileName, ScreenCenterX, ScreenCenterY, 24);
 
         HTTPClient http;
         // Initialize HTTP connection
@@ -391,6 +404,8 @@ void MainHelper::handleEndpointFetchFilesFromURL() {
 void MainHelper::handleEndpointFetchFilesFromClockRepo() {
     String url = s_wifiManager->server->arg("url");
     int customClock = s_wifiManager->server->arg("customClock").toInt();
+    String clockName = s_wifiManager->server->arg("clockName");
+    String authorName = s_wifiManager->server->arg("authorName");
     Log.noticeln("Fetch files from ClockRepo URL: %s, CustomClock: %d", url.c_str(), customClock);
     bool success = false;
     if (customClock >= 0 && customClock < USE_CLOCK_CUSTOM) {
@@ -403,7 +418,7 @@ void MainHelper::handleEndpointFetchFilesFromClockRepo() {
         html += "<div>Current Directory: " + dir + "/</div>";
         html += WEBPORTAL_FETCHFROMREPO_HTML_END;
         s_wifiManager->server->send(200, "text/html", html);
-        success = handleEndpointFetchFilesFromURLAction(dir, url, true);
+        success = handleEndpointFetchFilesFromURLAction(dir, url, true, clockName, authorName);
     } else {
         Log.errorln("Invalid CustomClock number: %d, max allowed is %d", customClock, USE_CLOCK_CUSTOM - 1);
         String message = "Invalid CustomClock number " + String(customClock) + ", max allowed is " + String(USE_CLOCK_CUSTOM - 1);
