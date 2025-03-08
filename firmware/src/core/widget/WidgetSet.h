@@ -26,6 +26,8 @@ public:
     void setClearScreensOnDrawCurrent();
     bool isItTimeToDraw();
     bool isItTimeToUpdate();
+    Widget *getWidgetByName(const String &name);
+    void switchToWidgetByName(const String &name);
 
 private:
     void showCenteredLine(int screen, const String &text);
