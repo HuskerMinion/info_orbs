@@ -1,6 +1,7 @@
 #include "ClockWidget.h"
 #include "ArduinoLog.h"
 #include "ClockTranslations.h"
+#include <ArduinoLog.h>
 
 ClockWidget::ClockWidget(ScreenManager &manager, ConfigManager &config)
     : Widget(manager, config),
@@ -68,6 +69,11 @@ void ClockWidget::setup() {
 }
 
 void ClockWidget::draw(bool force) {
+    force = force || m_forceNextDraw;
+    m_forceNextDraw = false;
+    if (force) {
+        m_manager.clearAllScreens();
+    }
     m_manager.setFont(CLOCK_FONT);
     GlobalTime *time = GlobalTime::getInstance();
 
@@ -200,8 +206,22 @@ bool ClockWidget::isValidClockType(int clockType) {
         return false;
 }
 
-void ClockWidget::changeClockType() {
-    m_type++;
+void ClockWidget::changeClockType(int clockType) {
+    if (clockType >= 0) {
+        Log.noticeln("Switching to clockType %d", clockType);
+        // Explicit clockType
+        m_type = clockType;
+        if (isCustomClock(m_type)) {
+            // enable clock if necessary
+            int customClockNumber = clockType - (int) ClockType::CUSTOM0;
+            if (customClockNumber < USE_CLOCK_CUSTOM) {
+                m_customEnabled[m_type - (int) ClockType::CUSTOM0] = true;
+            }
+        }
+    } else {
+        // Next clockType
+        m_type++;
+    }
     if (m_type >= CLOCK_TYPE_NUM) {
         m_type = 0;
     }
@@ -209,8 +229,7 @@ void ClockWidget::changeClockType() {
         // Call recursively until a valid clock type is found
         changeClockType();
     } else {
-        m_manager.clearAllScreens();
-        draw(true);
+        m_forceNextDraw = true;
     }
 }
 
