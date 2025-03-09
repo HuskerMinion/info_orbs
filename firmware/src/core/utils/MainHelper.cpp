@@ -423,6 +423,7 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(
             }
         }
         s_widgetSet->switchToWidgetByName("Clock"); // Switch to Clock and force redraw
+        s_widgetCycleDelayPrev = millis(); // Reset the cycle timer
     } else {
         // Force redraw
         s_widgetSet->setClearScreensOnDrawCurrent();
