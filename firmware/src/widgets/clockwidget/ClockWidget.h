@@ -87,11 +87,12 @@ public:
     void draw(bool force = false) override;
     void buttonPressed(uint8_t buttonId, ButtonState state) override;
     String getName() override;
-    void changeClockType(int clockType = -1);
+    void setCustomClock(int customClockNo, const String &secondHandColor, const String &overrideColor);
 
 private:
     void addConfigToManager();
     void changeFormat();
+    void changeClockType();
     void displayDigit(int displayIndex, const String &lastDigit, const String &digit, uint32_t color, bool shadowing);
     void displayDigit(int displayIndex, const String &lastDigit, const String &digit, uint32_t color);
     void displaySeconds(int displayIndex, int seconds, int color);
@@ -103,6 +104,9 @@ private:
     void displayClockGraphics(int displayIndex, const byte *clockArray[12][2], uint8_t index, int colorOverride);
     bool isValidClockType(int clockType);
     bool isCustomClock(int clockType);
+    static String getConfKeyCustEnabled(int custClockNo);
+    static String getConfKeyCustTickColor(int custClockNo);
+    static String getConfKeyCustOverrideColor(int custClockNo);
 
     int m_type = (int) DEFAULT_CLOCK;
     int m_format = CLOCK_FORMAT;

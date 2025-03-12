@@ -287,7 +287,7 @@ void MainHelper::handleEndpointDownloadFile() {
 
 bool MainHelper::handleEndpointFetchFilesFromURLAction(
     const String &directory, const String &url, const bool showProgress,
-    const int customClock, const String &clockName, const String &authorName) {
+    const int customClock, const String &clockName, const String &authorName, const String &secondHandColor, const String &overrideColor) {
     String currentUrl = url;
     Log.noticeln("Fetching files from URL: %s, Directory: %s", url.c_str(), directory.c_str());
     if (!currentUrl.startsWith("http://") && !currentUrl.startsWith("https://")) {
@@ -419,7 +419,7 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(
         if (customClock >= 0) {
             ClockWidget *clockWidget = static_cast<ClockWidget *>(s_widgetSet->getWidgetByName("Clock"));
             if (clockWidget) {
-                clockWidget->changeClockType((int) ClockType::CUSTOM0 + customClock); // Change the clock type to the custom clock
+                clockWidget->setCustomClock(customClock, secondHandColor, overrideColor); // Change the clock type to the custom clock
             }
         }
         s_widgetSet->switchToWidgetByName("Clock"); // Switch to Clock and force redraw
@@ -453,7 +453,9 @@ void MainHelper::handleEndpointFetchFilesFromClockRepo() {
     int customClock = s_wifiManager->server->arg("customClock").toInt();
     String clockName = s_wifiManager->server->arg("clockName");
     String authorName = s_wifiManager->server->arg("authorName");
-    Log.noticeln("Fetch files from ClockRepo URL: %s, CustomClock: %d", url.c_str(), customClock);
+    String secondHandColor = s_wifiManager->server->arg("secondHandColor");
+    String overrideColor = s_wifiManager->server->arg("overrideColor");
+    Log.noticeln("Fetch files from ClockRepo URL: %s, CustomClock: %d, sHC: %s, oC: %s", url.c_str(), customClock, secondHandColor.c_str(), overrideColor.c_str());
     bool success = false;
     if (customClock >= 0 && customClock < USE_CLOCK_CUSTOM) {
         // Valid
@@ -465,7 +467,7 @@ void MainHelper::handleEndpointFetchFilesFromClockRepo() {
         html += "<div>Current Directory: " + dir + "/</div>";
         html += WEBPORTAL_FETCHFROMREPO_HTML_END;
         s_wifiManager->server->send(200, "text/html", html);
-        success = handleEndpointFetchFilesFromURLAction(dir, url, true, customClock, clockName, authorName);
+        success = handleEndpointFetchFilesFromURLAction(dir, url, true, customClock, clockName, authorName, secondHandColor, overrideColor);
     } else {
         Log.errorln("Invalid CustomClock number: %d, max allowed is %d", customClock, USE_CLOCK_CUSTOM - 1);
         String message = "Invalid CustomClock number " + String(customClock) + ", max allowed is " + String(USE_CLOCK_CUSTOM - 1);

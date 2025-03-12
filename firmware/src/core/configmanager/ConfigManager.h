@@ -78,6 +78,11 @@ public:
     // Retrieve a float configuration value, with a default fallback
     float getConfigFloat(const char *varName, float defaultValue);
 
+    void setConfig(const char *varName, const std::string &value);
+    void setConfig(const char *varName, bool value);
+    void setConfig(const char *varName, int value);
+    void setConfig(const char *varName, float value);
+
     // Register callbacks for changes
     void addOnChangeCallback(
         const char *section,

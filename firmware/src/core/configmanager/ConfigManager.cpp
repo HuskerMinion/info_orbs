@@ -293,3 +293,19 @@ void ConfigManager::addOnChangeCallback(
     const char *section, const std::function<void(const char *section, const char *varName)> &callback) {
     m_changeCallbacks[section].push_back(callback);
 }
+
+void ConfigManager::setConfig(const char *varName, const std::string &value) {
+    m_preferences.putString(varName, value.c_str());
+}
+
+void ConfigManager::setConfig(const char *varName, const bool value) {
+    m_preferences.putBool(varName, value);
+}
+
+void ConfigManager::setConfig(const char *varName, const int value) {
+    m_preferences.putInt(varName, value);
+}
+
+void ConfigManager::setConfig(const char *varName, const float value) {
+    m_preferences.putFloat(varName, value);
+}
