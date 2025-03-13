@@ -4,6 +4,7 @@
 #include "config_helper.h"
 #include "icons.h"
 #include <ArduinoLog.h>
+#include <GlobalTime.h>
 #include <HTTPClient.h>
 #include <TimeLib.h>
 #include <esp_task_wdt.h>
@@ -513,9 +514,18 @@ void MainHelper::watchdogReset() {
 }
 
 void MainHelper::printPrefix(Print *_logOutput, int logLevel) {
-    unsigned long now_ms = millis();
-    time_t now_s = now_ms / 1000;
     char timestamp[20];
-    sprintf(timestamp, "%02d:%02d:%02d.%03d ", hour(now_s), minute(now_s), second(now_s), now_ms % 1000);
+#ifdef LOG_NTP_TIME
+    time_t now_s = GlobalTime::getUnixEpochIfAvailable(); // local time or zero
+#else
+    time_t now_s = 0;
+#endif
+    if (now_s == 0) {
+        unsigned long now_ms = millis(); // Fall back to hardware time if we don't have a valid time yet
+        now_s = now_ms / 1000;
+        sprintf(timestamp, "%02d:%02d:%02d.%03d ", hour(now_s), minute(now_s), second(now_s), now_ms % 1000);
+    } else {
+        sprintf(timestamp, "%02d:%02d:%02d ", hour(now_s), minute(now_s), second(now_s));
+    }
     _logOutput->print(timestamp);
 }

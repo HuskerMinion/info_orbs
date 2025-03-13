@@ -82,7 +82,7 @@ void ScreenManager::setFont(TTF_Font font) {
     if (error == 0) {
         m_curFont = font;
     } else {
-        Serial.printf("Unable to load TTF font %d\n", font);
+        Log.errorln("Unable to load TTF font %d", font);
     }
 }
 
@@ -132,7 +132,7 @@ void ScreenManager::fillScreen(uint32_t color) {
 
 bool ScreenManager::setBrightness(uint8_t brightness) {
     if (m_brightness != brightness) {
-        Serial.printf("Brightness set to %d\n", brightness);
+        Log.noticeln("Brightness set to %d", brightness);
         m_brightness = brightness;
         return true;
     } else {
@@ -183,7 +183,7 @@ void ScreenManager::reset() {
 
 unsigned int ScreenManager::calculateFitFontSize(uint32_t limit_width, uint32_t limit_height, Layout layout, const String &text) {
     unsigned int calcFontSize = m_render.calculateFitFontSize(limit_width, limit_height, layout, text.c_str());
-    // Serial.printf("calcFitFontSize: t=%s, w=%d, h=%d -> fs=%d\n", str, limit_width, limit_height, calcFontSize);
+    // Log.traceln("calcFitFontSize: t=%s, w=%d, h=%d -> fs=%d", str, limit_width, limit_height, calcFontSize);
     return calcFontSize;
 }
 

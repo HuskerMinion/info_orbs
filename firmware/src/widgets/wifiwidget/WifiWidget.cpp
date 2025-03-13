@@ -71,10 +71,10 @@ void WifiWidget::setup() {
 
     // WiFiManager automatically connects using saved credentials...
     if (m_wifiManager.autoConnect(m_apssid.c_str())) {
-        Serial.print("WifiManager connected.");
+        Log.infoln("WifiManager connected.");
     } else { // ...if connection fails (no saved credentials), it starts an access point with a WiFi setup portal at 192.168.4.1
         m_configPortalRunning = true;
-        Serial.println("Configuration portal running.");
+        Log.infoln("Configuration portal running.");
         m_manager.selectScreen(statusScreenIndex);
         m_manager.clearScreen();
         m_manager.drawCentreString("Configure", ScreenCenterX, ScreenCenterY - lineHeight, fontSize);
@@ -99,17 +99,16 @@ void WifiWidget::update(bool force) {
         m_isConnected = true;
         m_connectionString = "Connected";
         m_ipaddress = WiFi.localIP().toString();
-        Serial.print("IP address: ");
-        Serial.println(m_ipaddress);
+        Log.infoln("IP address: %s", m_ipaddress.c_str());
         // Start the WebPortal
         m_wifiManager.startWebPortal();
 #ifdef INCLUDE_MDNS
         // Initialize mDNS
         String mDNSname = m_wifiManager.getWiFiHostname();
         if (!MDNS.begin(mDNSname)) {
-            Serial.println("Error setting up MDNS responder!");
+            Log.warningln("Error setting up MDNS responder!");
         } else {
-            Serial.printf("mDNS responder started. You should find this device at http://%s\n", mDNSname.c_str());
+            Log.infoln("mDNS responder started. You should find this device at http://%s\n", mDNSname.c_str());
         }
         MDNS.addService("http", "tcp", 80);
 #endif
@@ -143,8 +142,7 @@ void WifiWidget::draw(bool force) {
         m_manager.clearScreen();
         m_manager.drawCentreString("IP Address", ScreenCenterX, ScreenCenterY - lineHeight, fontSize);
         m_manager.drawCentreString(m_ipaddress, ScreenCenterX, ScreenCenterY + lineHeight, fontSize);
-        Serial.println();
-        Serial.println("Connected to WiFi");
+        Log.infoln("Connected to WiFi");
         delay(messageDelay);
     } else if (m_connectionFailed && !m_hasDisplayedError) {
         m_hasDisplayedError = true;

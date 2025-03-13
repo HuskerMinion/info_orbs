@@ -13,7 +13,7 @@ GlobalTime::GlobalTime() {
     m_timezoneLocation = cm->getConfigString("timezoneLoc", m_timezoneLocation); // config added in MainHelper
     int clockFormat = cm->getConfigInt("clockFormat", CLOCK_FORMAT); // config added in ClockWidget
     m_ntpServer = cm->getConfigString("ntpServer", m_ntpServer); // config added in MainHelper
-    Serial.printf("GlobalTime initialized, tzLoc=%s, clockFormat=%d, ntpServer=%s\n", m_timezoneLocation.c_str(), clockFormat, m_ntpServer.c_str());
+    Log.infoln("GlobalTime initialized, tzLoc=%s, clockFormat=%d, ntpServer=%s", m_timezoneLocation.c_str(), clockFormat, m_ntpServer.c_str());
     m_format24hour = (clockFormat == CLOCK_FORMAT_24_HOUR);
     m_timeClient = new NTPClient(m_udp, m_ntpServer.c_str(), 0, m_updateInterval);
     m_timeClient->begin();
@@ -28,6 +28,10 @@ GlobalTime *GlobalTime::getInstance() {
         m_instance = new GlobalTime();
     }
     return m_instance;
+}
+
+time_t GlobalTime::getUnixEpochIfAvailable() {
+    return m_instance ? m_instance->getUnixEpoch() : 0;
 }
 
 void GlobalTime::updateTime(bool force) {
@@ -158,16 +162,13 @@ void GlobalTime::getTimeZoneOffsetFromAPI() {
                 // Timezone uses DST, update when necessary
                 m_nextTimeZoneUpdate = doc["zoneEnd"].as<unsigned long>() + random(5 * 60); // Randomize update by 5 minutes to avoid flooding the API
             }
-            Serial.print("Timezone Offset from API: ");
-            Serial.println(m_timeZoneOffset);
-            Serial.print("Next timezone update: ");
-            Serial.println(m_nextTimeZoneUpdate);
+            Log.infoln("Timezone Offset from API: %d; Next timezone update: %d", m_timeZoneOffset, m_nextTimeZoneUpdate);
             m_timeClient->setTimeOffset(m_timeZoneOffset);
         } else {
-            Serial.println("Deserialization error on timezone offset API response");
+            Log.warningln("Deserialization error on timezone offset API response");
         }
     } else {
-        Serial.println("Failed to get timezone offset from API");
+        Log.warningln("Failed to get timezone offset from API");
     }
 }
 

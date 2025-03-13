@@ -17,10 +17,10 @@
 WeatherWidget::WeatherWidget(ScreenManager &manager, ConfigManager &config) : Widget(manager, config) {
     m_enabled = true; // Enabled by default
     m_config.addConfigBool("WeatherWidget", "weatherEnabled", &m_enabled, t_enableWidget);
-    config.addConfigString("WeatherWidget", "weatherLocation", &m_weatherLocation, 40, t_weatherLocation);
-    config.addConfigComboBox("WeatherWidget", "weatherUnits", &m_weatherUnits, t_temperatureUnits, t_temperatureUnit, true);
-    config.addConfigComboBox("WeatherWidget", "weatherScrMode", &m_screenMode, t_screenModes, t_screenMode, true);
-    config.addConfigInt("WeatherWidget", "weatherCycleHL", &m_switchinterval, t_weatherCycleHL, true);
+    m_config.addConfigString("WeatherWidget", "weatherLocation", &m_weatherLocation, 40, t_weatherLocation);
+    m_config.addConfigComboBox("WeatherWidget", "weatherUnits", &m_weatherUnits, t_temperatureUnits, t_temperatureUnit, true);
+    m_config.addConfigComboBox("WeatherWidget", "weatherScrMode", &m_screenMode, t_screenModes, t_screenMode, true);
+    m_config.addConfigInt("WeatherWidget", "weatherCycleHL", &m_switchinterval, t_weatherCycleHL, true);
     Serial.printf("WeatherWidget initialized, loc=%s, mode=%d\n", m_weatherLocation.c_str(), m_screenMode);
     m_mode = MODE_HIGHS;
 }
@@ -29,10 +29,8 @@ WeatherWidget::~WeatherWidget() {
 }
 
 void WeatherWidget::changeMode() {
-    m_mode++;
-    if (m_mode > MODE_LOWS) {
-        m_mode = MODE_HIGHS;
-    }
+    m_prevMillisSwitch = millis();
+    m_mode = (m_mode == MODE_HIGHS) ? MODE_LOWS : MODE_HIGHS;
     threeDayWeather(4);
 }
 
@@ -67,12 +65,7 @@ void WeatherWidget::draw(bool force) {
     }
 
     if ((millis() - m_prevMillisSwitch >= (m_switchinterval * 1000)) && m_switchinterval > 0) {
-        m_prevMillisSwitch = millis();
-        m_mode++;
-        if (m_mode > MODE_LOWS) {
-            m_mode = MODE_HIGHS;
-        }
-        threeDayWeather(4);
+        changeMode();
     }
 }
 

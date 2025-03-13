@@ -96,7 +96,7 @@ void TaskManager::processAwaitingTasks() {
             taskParams->taskExec();
             delete taskParams; // Ensure cleanup after execution
             taskParamsCount--; // Decrement the count
-            // Serial.printf("TaskParams deleted: %d\n", taskParamsCount);
+            // Log.traceln("TaskParams deleted: %d", taskParamsCount);
 
             Utils::setBusy(false);
             Log.noticeln("✅ Release semaphore");
