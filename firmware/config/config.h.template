@@ -47,8 +47,8 @@
 #define WEATHER_VISUALCROSSING_LOCATION "Victoria, BC" // City/state for the weather, look it up on https://www.visualcrossing.com/weather-data
 
 //#define WEATHER_OPENWEATHERMAP_API_KEY "" // Your OpenWeatherMap API key (get it from https://home.openweathermap.org/users/sign_up)
-//#define WEATHER_OPENWEATHERMAP_LAT "" // Latitude of your location
-//#define WEATHER_OPENWEATHERMAP_LON "" // Longitude of your location
+//#define WEATHER_OPENWEATHERMAP_LAT 0.0 // Latitude of your location
+//#define WEATHER_OPENWEATHERMAP_LON 0.0 // Longitude of your location
 //#define WEATHER_OPENWEATHERMAP_NAME "Victoria" // Name of your location
 
 //#define WEATHER_TEMPEST_STATION_ID "136542" // Set to the station ID of your Tempest weather station, or find one close to you at https://tempestwx.com/map
