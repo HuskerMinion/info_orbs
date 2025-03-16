@@ -8,8 +8,10 @@ VisualCrossingFeed::VisualCrossingFeed(const String &apiKey, int units)
     : apiKey(apiKey), m_units(units) {}
 
 void VisualCrossingFeed::setupConfig(ConfigManager &config) {
-
+    // Define the configuration for VisualCrossing variables
     config.addConfigString("WeatherWidget", "weatherLocation", &m_weatherLocation, 40, t_weatherLocation);
+    config.addConfigFloat("WeatherWidget", "VCweatherLat", &m_lat_id, t_VCWeatherLat);
+    config.addConfigFloat("WeatherWidget", "VCweatherLong", &m_long_id, t_VCWeatherLong);
 }
 
 bool VisualCrossingFeed::getWeatherData(WeatherDataModel &model) {
@@ -22,8 +24,7 @@ bool VisualCrossingFeed::getWeatherData(WeatherDataModel &model) {
         lang = "en";
     }
 
-    String httpRequestAddress = String(WEATHER_VISUALCROSSING_API_URL) +
-                                String(m_weatherLocation.c_str()) + "/next3days?key=" + apiKey + "&unitGroup=" + tempUnits +
+    String httpRequestAddress = String(WEATHER_VISUALCROSSING_API_URL) + String(m_lat_id, 4).c_str() + "," + String(m_long_id, 4).c_str() + "/next3days?key=" + apiKey + "&unitGroup=" + tempUnits +
                                 "&include=days,current&iconSet=icons1&lang=" + lang;
 
     auto task = TaskFactory::createHttpGetTask(
@@ -71,7 +72,7 @@ void VisualCrossingFeed::processResponse(int httpCode, const String &response, W
         DeserializationError error = deserializeJson(doc, response);
 
         if (!error) {
-            model.setCityName(doc["resolvedAddress"].as<String>());
+            model.setCityName(m_weatherLocation.c_str());
             model.setCurrentTemperature(doc["currentConditions"]["temp"].as<float>());
             model.setCurrentText(doc["days"][0]["description"].as<String>());
 
