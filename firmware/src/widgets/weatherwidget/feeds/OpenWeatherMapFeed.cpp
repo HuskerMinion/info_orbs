@@ -10,9 +10,9 @@ OpenWeatherMapFeed::OpenWeatherMapFeed(const String &apiKey, int units)
 
 void OpenWeatherMapFeed::setupConfig(ConfigManager &config) {
     // Define the configuration for OpenWeatherMap variables
+    config.addConfigString("WeatherWidget", "openWeatherName", &m_name, 15, t_openWeatherName);
     config.addConfigFloat("WeatherWidget", "openWeatherLat", &m_lat_id, t_openWeatherLat);
     config.addConfigFloat("WeatherWidget", "openWeatherLong", &m_long_id, t_openWeatherLong);
-    config.addConfigString("WeatherWidget", "openWeatherName", &m_name, 15, t_openWeatherName);
 }
 
 bool OpenWeatherMapFeed::getWeatherData(WeatherDataModel &model) {

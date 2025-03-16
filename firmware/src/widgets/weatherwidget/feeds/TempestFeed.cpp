@@ -9,8 +9,8 @@ TempestFeed::TempestFeed(const String &apiKey, int units)
 
 void TempestFeed::setupConfig(ConfigManager &config) {
     // Define the configuration for stationId and stationName
-    config.addConfigString("WeatherWidget", "tempestStatId", &m_stationId, 10, t_tempestStationId);
     config.addConfigString("WeatherWidget", "tempestStatName", &m_stationName, 15, t_tempestStationName);
+    config.addConfigString("WeatherWidget", "tempestStatId", &m_stationId, 10, t_tempestStationId);
 }
 
 bool TempestFeed::getWeatherData(WeatherDataModel &model) {
