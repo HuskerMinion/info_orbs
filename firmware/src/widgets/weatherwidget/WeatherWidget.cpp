@@ -11,6 +11,7 @@
 #include "WeatherWidget.h"
 #include "WeatherTranslations.h"
 #include "feeds/OpenWeatherMapFeed.h"
+#include "feeds/PirateWeatherFeed.h"
 #include "feeds/TempestFeed.h"
 #include "feeds/VisualCrossingFeed.h"
 #include "icons.h"
@@ -38,13 +39,20 @@ WeatherFeed *WeatherWidget::createWeatherFeed() {
 
     int weatherUnits = m_config.getConfigInt("weatherUnits", m_weatherUnits);
 
-#if WEATHER_OPENWEATHERMAP_FEED
-    return new OpenWeatherMapFeed(WEATHER_OPENWEATHERMAP_API_KEY, weatherUnits);
-#elif WEATHER_TEMPEST_FEED
-    return new TempestFeed(WEATHER_TEMPEST_API_KEY, weatherUnits);
-#elif WEATHER_VISUALCROSSING_FEED
-    return new VisualCrossingFeed(WEATHER_VISUALCROSSING_API_KEY, weatherUnits);
-#endif
+    switch (WEATHER_FEED) {
+    case (VISUALCROSSING): {
+        return new VisualCrossingFeed(WEATHER_VISUALCROSSING_API_KEY, weatherUnits);
+    }
+    case (OPENWEATHERMAP): {
+        return new OpenWeatherMapFeed(WEATHER_OPENWEATHERMAP_API_KEY, weatherUnits);
+    }
+    case (PIRATEWEATHER): {
+        return new PirateWeatherFeed(WEATHER_PIRATEWEATHER_API_KEY, weatherUnits);
+    }
+    case (TEMPEST): {
+        return new TempestFeed(WEATHER_TEMPEST_API_KEY, weatherUnits);
+    }
+    }
 }
 
 void WeatherWidget::changeMode() {

@@ -6,12 +6,8 @@
 #include "Widget.h"
 #include "config_helper.h"
 #include <TaskManager.h>
+#include "WeatherFeed.h"
 
-#ifdef WEATHER_TEMPEST_FEED
-    #include "feeds/TempestFeed.h"
-#else
-    #include "feeds/VisualCrossingFeed.h"
-#endif
 class WeatherWidget : public Widget {
 public:
     WeatherWidget(ScreenManager &manager, ConfigManager &config);
