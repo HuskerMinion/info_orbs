@@ -13,6 +13,14 @@ constexpr Translation t_weatherCycleHL = {
     "Switch between Highs and Lows every X seconds, set to 0 to disable", // EN
 };
 
+constexpr Translation t_VCWeatherLat = {
+    "Visual Crossing Latitude", // EN
+};
+
+constexpr Translation t_VCWeatherLong = {
+    "Visual Crossing Longitude", // EN
+};
+
 constexpr Translation t_tempestStationId = {
     "Tempest Station ID", // EN
 };
@@ -31,4 +39,16 @@ constexpr Translation t_openWeatherLong = {
 
 constexpr Translation t_openWeatherName = {
     "OpenWeather Location Name", // EN
+};
+
+constexpr Translation t_pirateWeatherLat = {
+    "Pirate Weather Latitude", // EN
+};
+
+constexpr Translation t_pirateWeatherLong = {
+    "Pirate Weather Longitude", // EN
+};
+
+constexpr Translation t_pirateWeatherName = {
+    "Pirate Weather Name", // EN
 };

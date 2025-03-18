@@ -10,6 +10,9 @@
 #ifndef TEMPEST_PROXY_URL
     #define TEMPEST_PROXY_URL "https://info-orbs-tempest-proxy.onrender.com/proxy"
 #endif
+#ifndef WEATHER_TEMPEST_API_KEY
+    #define WEATHER_TEMPEST_API_KEY ""
+#endif
 #ifndef WEATHER_TEMPEST_STATION_ID
     #define WEATHER_TEMPEST_STATION_ID "136542" // just a default, change to your station ID
 #endif

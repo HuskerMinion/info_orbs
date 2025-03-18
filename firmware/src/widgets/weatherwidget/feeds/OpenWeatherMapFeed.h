@@ -9,11 +9,14 @@
 #ifndef WEATHER_OPENWEATHERMAP_API_URL
     #define WEATHER_OPENWEATHERMAP_API_URL "https://api.openweathermap.org/data/3.0/onecall"
 #endif
+#ifndef WEATHER_OPENWEATHERMAP_API_KEY
+    #define WEATHER_OPENWEATHERMAP_API_KEY ""
+#endif
 #ifndef WEATHER_OPENWEATHERMAP_LAT
-    #define WEATHER_OPENWEATHERMAP_LAT "42.0711" // just a default, change to your location Lat
+    #define WEATHER_OPENWEATHERMAP_LAT 42.0711 // just a default, change to your location Lat
 #endif
 #ifndef WEATHER_OPENWEATHERMAP_LON
-    #define WEATHER_OPENWEATHERMAP_LON "-87.9652" // just a default, change to your location Lon
+    #define WEATHER_OPENWEATHERMAP_LON -87.9652 // just a default, change to your location Lon
 #endif
 #ifndef WEATHER_OPENWEATHERMAP_NAME
     #define WEATHER_OPENWEATHERMAP_NAME "Chicago" // just a default, change to your location name
@@ -29,8 +32,8 @@ public:
 
 private:
     String apiKey;
-    std::string m_lat_id = WEATHER_OPENWEATHERMAP_LAT;
-    std::string m_long_id = WEATHER_OPENWEATHERMAP_LON;
+    float m_lat_id = WEATHER_OPENWEATHERMAP_LAT;
+    float m_long_id = WEATHER_OPENWEATHERMAP_LON;
     std::string m_name = WEATHER_OPENWEATHERMAP_NAME;
 
 #ifdef WEATHER_UNITS_METRIC
