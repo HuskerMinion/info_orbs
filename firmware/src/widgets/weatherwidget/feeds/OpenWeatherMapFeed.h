@@ -9,6 +9,9 @@
 #ifndef WEATHER_OPENWEATHERMAP_API_URL
     #define WEATHER_OPENWEATHERMAP_API_URL "https://api.openweathermap.org/data/3.0/onecall"
 #endif
+#ifndef WEATHER_OPENWEATHERMAP_API_KEY
+    #define WEATHER_OPENWEATHERMAP_API_KEY ""
+#endif
 #ifndef WEATHER_OPENWEATHERMAP_LAT
     #define WEATHER_OPENWEATHERMAP_LAT 42.0711 // just a default, change to your location Lat
 #endif

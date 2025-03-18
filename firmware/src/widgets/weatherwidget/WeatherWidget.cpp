@@ -43,18 +43,18 @@ WeatherFeed *WeatherWidget::createWeatherFeed() {
     int weatherUnits = m_config.getConfigInt("weatherUnits", m_weatherUnits);
 
     switch (WEATHER_FEED) {
-    case (VISUALCROSSING): {
-        return new VisualCrossingFeed(WEATHER_VISUALCROSSING_API_KEY, weatherUnits);
-    }
-    case (OPENWEATHERMAP): {
-        return new OpenWeatherMapFeed(WEATHER_OPENWEATHERMAP_API_KEY, weatherUnits);
-    }
-    case (PIRATEWEATHER): {
-        return new PirateWeatherFeed(WEATHER_PIRATEWEATHER_API_KEY, weatherUnits);
-    }
-    case (TEMPEST): {
-        return new TempestFeed(WEATHER_TEMPEST_API_KEY, weatherUnits);
-    }
+        case (VISUALCROSSING): {
+            return new VisualCrossingFeed(WEATHER_VISUALCROSSING_API_KEY, weatherUnits);
+        }
+        case (OPENWEATHERMAP): {
+            return new OpenWeatherMapFeed(WEATHER_OPENWEATHERMAP_API_KEY, weatherUnits);
+        }
+        case (PIRATEWEATHER): {
+            return new PirateWeatherFeed(WEATHER_PIRATEWEATHER_API_KEY, weatherUnits);
+        }
+        case (TEMPEST): {
+            return new TempestFeed(WEATHER_TEMPEST_API_KEY, weatherUnits);
+        }
     }
 }
 

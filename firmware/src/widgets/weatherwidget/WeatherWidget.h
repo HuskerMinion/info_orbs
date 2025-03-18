@@ -8,6 +8,17 @@
 #include <TaskManager.h>
 #include "WeatherFeed.h"
 
+enum WeatherFeedType {
+    VISUALCROSSING = 0,
+    OPENWEATHERMAP = 1,
+    PIRATEWEATHER = 2,
+    TEMPEST = 3
+};
+
+#ifndef WEATHER_FEED
+    #define WEATHER_FEED VISUALCROSSING
+#endif
+
 class WeatherWidget : public Widget {
 public:
     WeatherWidget(ScreenManager &manager, ConfigManager &config);

@@ -36,12 +36,6 @@
 //#define CLOCK_FONT DSEG7              // Define clock font (defaults to DSEG7, you can also try DSEG14 or FINAL_FRONTIER)
 
 // WEATHER CONFIGURATION
-enum WeatherFeedType {
-    VISUALCROSSING = 0,
-    OPENWEATHERMAP = 1,
-    PIRATEWEATHER=2,
-    TEMPEST = 3
-  };
 #define WEATHER_FEED VISUALCROSSING
 
 #define WEATHER_SCREEN_MODE Dark        // Can be either Light or Dark
@@ -49,27 +43,24 @@ enum WeatherFeedType {
 #define HIGH_LOW_INTERVAL 0             // Switch between Highs and Lows on 3 day forecast in X seconds - set to 0 to disable
 
 #define WEATHER_VISUALCROSSING_LOCATION "Victoria, BC" // City/state for the weather, look it up on https://www.visualcrossing.com/weather-data
-#define WEATHER_VISUALCROSSING_API_URL "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/"
-#define WEATHER_VISUALCROSSING_API_KEY "XW2RDGD6XK432AF25BNK2A3C7" // Your Visual Crossing API key (https://www.visualcrossing.com/sign-up/)
-#define WEATHER_VISUALCROSSING_LAT 0.0 // Latitude of your location
-#define WEATHER_VISUALCROSSING_LON 0.0 // Longitude of your location
 #define WEATHER_VISUALCROSSING_NAME WEATHER_VISUALCROSSING_LOCATION // Name of your location
+//#define WEATHER_VISUALCROSSING_API_KEY "YOUR-KEY-GOES-HERE" // Your Visual Crossing API key (get it from https://www.visualcrossing.com/sign-up/)
+//#define WEATHER_VISUALCROSSING_LAT 0.0 // Latitude of your location
+//#define WEATHER_VISUALCROSSING_LON 0.0 // Longitude of your location
 
-#define WEATHER_OPENWEATHERMAP_API_URL "https://api.openweathermap.org/data/3.0/onecall"
-#define WEATHER_OPENWEATHERMAP_API_KEY "SOME-KEY-GOES-HERE" // Your OpenWeatherMap API key (get it from https://home.openweathermap.org/users/sign_up)
-#define WEATHER_OPENWEATHERMAP_LAT 0.0 // Latitude of your location
-#define WEATHER_OPENWEATHERMAP_LON 0.0 // Longitude of your location
-#define WEATHER_OPENWEATHERMAP_NAME "Victoria" // Name of your location
+//#define WEATHER_OPENWEATHERMAP_API_KEY "YOUR-KEY-GOES-HERE" // Your OpenWeatherMap API key (get it from https://home.openweathermap.org/users/sign_up)
+//#define WEATHER_OPENWEATHERMAP_LAT 0.0 // Latitude of your location
+//#define WEATHER_OPENWEATHERMAP_LON 0.0 // Longitude of your location
+//#define WEATHER_OPENWEATHERMAP_NAME "Victoria" // Name of your location
 
-#define WEATHER_PIRATEWEATHER_API_KEY "SOME-KEY-GOES-HERE" // Your PirateWeatherMap API key (get it from https://pirate-weather.apiable.io/signup)
-#define WEATHER_PIRATEWEATHER_API_URL "https://api.pirateweather.net/forecast/"
-#define WEATHER_PIRATEWEATHER_LAT 0.0
-#define WEATHER_PIRATEWEATHER_LON 0.0
-#define WEATHER_PIRATEWEATHER_NAME "Victoria" // Name of your location
+//#define WEATHER_PIRATEWEATHER_API_KEY "YOUR-KEY-GOES-HERE"  // Your Pirate Weather API key (get it from https://pirate-weather.apiable.io/signup)
+//#define WEATHER_PIRATEWEATHER_LAT 0.0 // Latitude of your location
+//#define WEATHER_PIRATEWEATHER_LON 0.0 // Longitude of your location
+//#define WEATHER_PIRATEWEATHER_NAME "Victoria" // Name of your location
 
-#define WEATHER_TEMPEST_STATION_ID "136542" // Set to the station ID of your Tempest weather station, or find one close to you at https://tempestwx.com/map
-#define WEATHER_TEMPEST_STATION_NAME "Chicago" // Give your Tempest weather station a name
-#define WEATHER_TEMPEST_API_KEY "SOME-KEY-GOES-HERE"
+//#define WEATHER_TEMPEST_API_KEY "YOUR-KEY-GOES-HERE"
+//#define WEATHER_TEMPEST_STATION_ID "136542" // Set to the station ID of your Tempest weather station, or find one close to you at https://tempestwx.com/map
+//#define WEATHER_TEMPEST_STATION_NAME "Chicago" // Give your Tempest weather station a name
 
 // STOCK TICKER CONFIGURATION
 #define STOCK_TICKER_LIST "BTC/USD,USD/CAD,XEQT,SPY,APC&country=Germany" // Choose up to 15 securities to track. You can track forex, crypto (symbol/USD) or stocks from any exchange (if one ticker is part of multiple exchanges you can add on "&country=Canada" to narrow down to your ticker)

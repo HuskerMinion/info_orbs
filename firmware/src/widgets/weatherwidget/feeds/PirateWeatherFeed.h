@@ -9,6 +9,9 @@
 #ifndef WEATHER_PIRATEWEATHER_API_URL
     #define WEATHER_PIRATEWEATHER_API_URL "https://api.pirateweather.net/forecast/"
 #endif
+#ifndef WEATHER_PIRATEWEATHER_API_KEY
+    #define WEATHER_PIRATEWEATHER_API_KEY ""
+#endif
 #ifndef WEATHER_PIRATEWEATHER_LAT
     #define WEATHER_PIRATEWEATHER_LAT 0
 #endif
