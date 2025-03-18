@@ -83,6 +83,7 @@ public:
     static void updateBrightnessByTime(uint8_t hour24);
 
     static void printPrefix(Print *_logOutput, int logLevel);
+    static void eraseNVSAndRestart();
 };
 
 #endif

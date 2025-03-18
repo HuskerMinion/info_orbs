@@ -82,7 +82,7 @@ void ScreenManager::setFont(TTF_Font font) {
     if (error == 0) {
         m_curFont = font;
     } else {
-        Serial.printf("Unable to load TTF font %d\n", font);
+        Log.errorln("Unable to load TTF font %d", font);
     }
 }
 
@@ -132,7 +132,7 @@ void ScreenManager::fillScreen(uint32_t color) {
 
 bool ScreenManager::setBrightness(uint8_t brightness) {
     if (m_brightness != brightness) {
-        Serial.printf("Brightness set to %d\n", brightness);
+        Log.noticeln("Brightness set to %d", brightness);
         m_brightness = brightness;
         return true;
     } else {
@@ -183,7 +183,7 @@ void ScreenManager::reset() {
 
 unsigned int ScreenManager::calculateFitFontSize(uint32_t limit_width, uint32_t limit_height, Layout layout, const String &text) {
     unsigned int calcFontSize = m_render.calculateFitFontSize(limit_width, limit_height, layout, text.c_str());
-    // Serial.printf("calcFitFontSize: t=%s, w=%d, h=%d -> fs=%d\n", str, limit_width, limit_height, calcFontSize);
+    // Log.traceln("calcFitFontSize: t=%s, w=%d, h=%d -> fs=%d", str, limit_width, limit_height, calcFontSize);
     return calcFontSize;
 }
 
@@ -318,6 +318,43 @@ void ScreenManager::drawLegacyString(const String &string, int32_t x, int32_t y,
 
 int16_t ScreenManager::drawLegacyChar(uint16_t uniCode, int32_t x, int32_t y, uint8_t font) {
     return m_tft.drawChar(uniCode, x, y, font);
+}
+
+int16_t ScreenManager::width() {
+    return m_tft.width();
+}
+
+int16_t ScreenManager::height() {
+    return m_tft.height();
+}
+
+void ScreenManager::setTextColor(uint16_t c) {
+    m_tft.setTextColor(c);
+}
+void ScreenManager::setTextColor(uint16_t c, uint16_t b) {
+    m_tft.setTextColor(c, b);
+}
+void ScreenManager::setTextColor(uint16_t c, uint16_t b, bool bgfill) {
+    m_tft.setTextColor(c, b, bgfill);
+}
+
+uint16_t ScreenManager::color565(uint8_t r, uint8_t g, uint8_t b) {
+    return m_tft.color565(r, g, b);
+}
+
+void ScreenManager::setCursor(int16_t x, int16_t y) {
+    m_tft.setCursor(x, y);
+}
+
+void ScreenManager::setTextSize(uint8_t s) {
+    m_tft.setTextSize(s);
+}
+
+void ScreenManager::print(String s) {
+    m_tft.print(s);
+}
+void ScreenManager::print(char c) {
+    m_tft.print(c);
 }
 
 // Static function to be used in TJpgDec callback

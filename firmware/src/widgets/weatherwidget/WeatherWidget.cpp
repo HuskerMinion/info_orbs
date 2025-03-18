@@ -9,30 +9,49 @@
 // factor out the text wrapping (there's a utils for that already, if that doesn't work, why not?)
 
 #include "WeatherWidget.h"
-#include "TaskFactory.h"
 #include "WeatherTranslations.h"
+#include "feeds/OpenWeatherMapFeed.h"
+#include "feeds/TempestFeed.h"
+#include "feeds/VisualCrossingFeed.h"
 #include "icons.h"
 #include <ArduinoJson.h>
+#include <ArduinoLog.h>
 
-WeatherWidget::WeatherWidget(ScreenManager &manager, ConfigManager &config) : Widget(manager, config) {
+WeatherWidget::WeatherWidget(ScreenManager &manager, ConfigManager &config)
+    : Widget(manager, config),
+      m_drawTimer(addDrawRefreshFrequency(WEATHER_DRAW_DELAY)),
+      m_updateTimer(addUpdateRefreshFrequency(WEATHER_UPDATE_DELAY)) {
     m_enabled = true; // Enabled by default
     m_config.addConfigBool("WeatherWidget", "weatherEnabled", &m_enabled, t_enableWidget);
-    config.addConfigString("WeatherWidget", "weatherLocation", &m_weatherLocation, 40, t_weatherLocation);
-    config.addConfigComboBox("WeatherWidget", "weatherUnits", &m_weatherUnits, t_temperatureUnits, t_temperatureUnit, true);
-    config.addConfigComboBox("WeatherWidget", "weatherScrMode", &m_screenMode, t_screenModes, t_screenMode, true);
-    config.addConfigInt("WeatherWidget", "weatherCycleHL", &m_switchinterval, t_weatherCycleHL, true);
-    Serial.printf("WeatherWidget initialized, loc=%s, mode=%d\n", m_weatherLocation.c_str(), m_screenMode);
+    weatherFeed = createWeatherFeed();
+    weatherFeed->setupConfig(config); // allow feed to add its own config
+    m_config.addConfigComboBox("WeatherWidget", "weatherUnits", &m_weatherUnits, t_temperatureUnits, t_temperatureUnit, true);
+    m_config.addConfigComboBox("WeatherWidget", "weatherScrMode", &m_screenMode, t_screenModes, t_screenMode, true);
+    m_config.addConfigInt("WeatherWidget", "weatherCycleHL", &m_switchinterval, t_weatherCycleHL, true);
+    Log.noticeln("WeatherWidget initialized, mode=%d", m_screenMode);
     m_mode = MODE_HIGHS;
 }
 
 WeatherWidget::~WeatherWidget() {
+    delete weatherFeed;
+}
+
+WeatherFeed *WeatherWidget::createWeatherFeed() {
+
+    int weatherUnits = m_config.getConfigInt("weatherUnits", m_weatherUnits);
+
+#if WEATHER_OPENWEATHERMAP_FEED
+    return new OpenWeatherMapFeed(WEATHER_OPENWEATHERMAP_API_KEY, weatherUnits);
+#elif WEATHER_TEMPEST_FEED
+    return new TempestFeed(WEATHER_TEMPEST_API_KEY, weatherUnits);
+#elif WEATHER_VISUALCROSSING_FEED
+    return new VisualCrossingFeed(WEATHER_VISUALCROSSING_API_KEY, weatherUnits);
+#endif
 }
 
 void WeatherWidget::changeMode() {
-    m_mode++;
-    if (m_mode > MODE_LOWS) {
-        m_mode = MODE_HIGHS;
-    }
+    m_prevMillisSwitch = millis();
+    m_mode = (m_mode == MODE_HIGHS) ? MODE_LOWS : MODE_HIGHS;
     threeDayWeather(4);
 }
 
@@ -64,105 +83,25 @@ void WeatherWidget::draw(bool force) {
         singleWeatherDeg(3);
         threeDayWeather(4);
         model.setChangedStatus(false);
+        if (force) {
+            resetTimer(m_drawTimer); // Reset only on forced draw
+        }
     }
 
     if ((millis() - m_prevMillisSwitch >= (m_switchinterval * 1000)) && m_switchinterval > 0) {
-        m_prevMillisSwitch = millis();
-        m_mode++;
-        if (m_mode > MODE_LOWS) {
-            m_mode = MODE_HIGHS;
-        }
-        threeDayWeather(4);
+        changeMode();
+        m_prevMillisSwitch = millis(); // Reset timer
     }
 }
 
 void WeatherWidget::update(bool force) {
-    if (force || m_weatherDelayPrev == 0 || (millis() - m_weatherDelayPrev) >= m_weatherDelay) {
-        if (force) {
-            int retry = 0;
-            while (!getWeatherData() && retry++ < MAX_RETRIES)
-                ;
-        } else {
-            getWeatherData();
-        }
-        m_weatherDelayPrev = millis();
-    }
-}
-
-bool WeatherWidget::getWeatherData() {
-    String weatherUnits = m_weatherUnits == 0 ? "metric" : "us";
-    String lang = I18n::getLanguageString();
-    if (lang != "en" && lang != "de" && lang != "fr") {
-        // Language is not supported on visualcrossing -> use english
-        lang = "en";
-    }
-    String httpRequestAddress = "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/" +
-                                String(m_weatherLocation.c_str()) + "/next3days?key=" + weatherApiKey + "&unitGroup=" + weatherUnits +
-                                "&include=days,current&iconSet=icons1&lang=" + lang;
-
-    auto task = TaskFactory::createHttpGetTask(
-        httpRequestAddress, [this](int httpCode, const String &response) { processResponse(httpCode, response); }, [this](int httpCode, String &response) { preProcessResponse(httpCode, response); });
-
-    if (!task) {
-        Serial.println("Failed to create weather task");
-        return false;
-    }
-
-    bool success = TaskManager::getInstance()->addTask(std::move(task));
-    if (!success) {
-        Serial.println("Failed to add weather task");
-    }
-
-    return success;
-}
-
-void WeatherWidget::preProcessResponse(int httpCode, String &response) {
-    if (httpCode > 0) {
-        JsonDocument filter;
-        filter["resolvedAddress"] = true;
-        filter["currentConditions"]["temp"] = true;
-        filter["days"][0]["description"] = true;
-        filter["currentConditions"]["icon"] = true;
-        filter["days"][0]["icon"] = true;
-        filter["days"][0]["tempmax"] = true;
-        filter["days"][0]["tempmin"] = true;
-
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, response, DeserializationOption::Filter(filter));
-
-        if (!error) {
-            response = doc.as<String>();
-        } else {
-            // Handle JSON deserialization error
-            Serial.println("Deserialization failed: " + String(error.c_str()));
-        }
-    }
-}
-
-void WeatherWidget::processResponse(int httpCode, const String &response) {
-    if (httpCode > 0) {
-        JsonDocument doc;
-        DeserializationError error = deserializeJson(doc, response);
-
-        if (!error) {
-            model.setCityName(doc["resolvedAddress"].as<String>());
-            model.setCurrentTemperature(doc["currentConditions"]["temp"].as<float>());
-            model.setCurrentText(doc["days"][0]["description"].as<String>());
-
-            model.setCurrentIcon(doc["currentConditions"]["icon"].as<String>());
-            model.setTodayHigh(doc["days"][0]["tempmax"].as<float>());
-            model.setTodayLow(doc["days"][0]["tempmin"].as<float>());
-            for (int i = 0; i < 3; i++) {
-                model.setDayIcon(i, doc["days"][i + 1]["icon"].as<String>());
-                model.setDayHigh(i, doc["days"][i + 1]["tempmax"].as<float>());
-                model.setDayLow(i, doc["days"][i + 1]["tempmin"].as<float>());
-            }
-        } else {
-            // Handle JSON deserialization error
-            Serial.println("Deserialization failed: " + String(error.c_str()));
-        }
+    if (force) {
+        int retry = 0;
+        while (!weatherFeed->getWeatherData(model) && retry++ < MAX_RETRIES)
+            ;
+        resetTimer(m_updateTimer); // Reset timer after forced update
     } else {
-        Serial.printf("HTTP request failed, error code: %d\n", httpCode);
+        weatherFeed->getWeatherData(model);
     }
 }
 
@@ -223,7 +162,7 @@ void WeatherWidget::drawWeatherIcon(int displayIndex, const String &condition, i
         iconStart = m_screenMode == Light ? cloudsW_start : cloudsB_start;
         iconEnd = m_screenMode == Light ? cloudsW_end : cloudsB_end;
     } else {
-        Serial.println("unknown weather icon:" + condition);
+        Log.warningln("Unknown weather icon: %s", condition.c_str());
     }
 
     const int size = iconEnd - iconStart;

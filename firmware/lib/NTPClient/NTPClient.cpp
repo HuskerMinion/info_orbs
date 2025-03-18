@@ -20,6 +20,7 @@
  */
 
 #include "NTPClient.h"
+#include "ArduinoLog.h"
 
 NTPClient::NTPClient(UDP& udp) {
   this->_udp            = &udp;
@@ -83,7 +84,7 @@ void NTPClient::begin(unsigned int port) {
 
 bool NTPClient::forceUpdate() {
   #ifdef DEBUG_NTPClient
-    Serial.println("Update from NTP Server");
+    Log.info("Update from NTP Server");
   #endif
 
   // flush any existing packets

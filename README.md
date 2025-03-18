@@ -46,6 +46,7 @@ Version 1.1 is here, in the future releases will be more frequent, but this one 
 
 If you use the PCB soldering should be straight forward, however if you want to wire thing up yourself the pinouts are below:
 
+```text
     DSP-----ESP
     SDA -> G17
     SCLK -> G23
@@ -58,6 +59,7 @@ If you use the PCB soldering should be straight forward, however if you want to 
     Screen3 CS -> G32
     Screen4 CS -> G25
     Screen5 CS -> G21
+```
 
 Lastly, three pushbuttons between `VCC/5V` and `G14,G26,G27.`
 Diagram can be seen below:
@@ -79,13 +81,15 @@ Once you're done this, you can flash the firmware to your orbs by holding the "b
 
 ### 3. Widget Options & Configuration
 
-**Basic Setup Fields**
+#### Basic Setup Fields
 
 - Wifi is now configured on device using WifiManager by connected to the devices access point upon boot. However if this does not work, you may manually configure your wifi details using the fields in the config file (only do this as a last resort.)
+
   ```c
   //#define WIFI_SSID "MyWiFiRouter" // Wifi router SSID name (use only 2.4 GHz   network)
   //#define WIFI_PASS "WiFiPassword" // Wifi router password
   ```
+
 - Timezone configuration, you will need to change the below field to your local timezone, or timezone you want displayed on the devices clock(s). Please copy/paste the exact timezone as outline in this list <https://timezonedb.com/time-zones>
 
   ```c
@@ -99,15 +103,17 @@ Once you're done this, you can flash the firmware to your orbs by holding the "b
   ```
 
 - If you want your orbs to "dim" at certain hours of the day you need to uncomment (remove the `//` at the beginning of the below three lines of code then adjust the starting hour, ending hour, and brightness which you want the dimming to occur.
+
   ```c
   //#define DIM_START_HOUR 22  // Dim the screens at this time (24h format)
   //#define DIM_END_HOUR 7     // Undim the screens at this time (24h format)
   //#define DIM_BRIGHTNESS 128 // Dim brightness (0-255)
   ```
 
-**Widgets & Widget Settings**
+#### Widgets & Widget Settings
 
-1. **Clock** (Enabled By Default) - this will show the time on the orbs with multiple means of customization. The default settings for the clock will switch between the default and "nixie" style clock upon a short press of the middle button. It will switch between 12/24 hours by a medium press(~0.5 seconds) of the same middle button. The clock has many other configureable elements that can be found in config.h as shown below, feel free to mess around with them to make it your own (:
+1. **Clock** (Enabled By Default) - this will show the time on the orbs with multiple means of customization. The default settings for the clock will switch between the default and "nixie" style clock upon a short press of the middle button.
+   It will switch between 12/24 hours by a medium press(~0.5 seconds) of the same middle button. The clock has many other configureable elements that can be found in config.h as shown below, feel free to mess around with them to make it your own (:
 
    ```c
    // CLOCK CONFIGURATION
@@ -132,20 +138,25 @@ Once you're done this, you can flash the firmware to your orbs by holding the "b
    #define WEATHER_UNITS_METRIC            // Comment this line out (or delete it)    if you want imperial units for the weather
    ```
 
-3. **Stocks** (Enabled By Default) - This will show 5 pre-defined stocks, their prices, names, daily change, and 52 weeks highs/lows. Pressing the middle button will refresh the prices, they will otherwise update automatically every 15 minutes
-   There are multiple markets/exchanges supported including crypto and forex, the data for this widget is supplied by twelve-data, info on what data you can pull can be found here: <https://twelvedata.com/exchanges?level=grow>.
-   Simply adjust the 5 stocks in the config file to change the ones you'd like to track, separated by commas.
+3. **Stocks** (Enabled By Default) - This will show 5 pre-defined stocks, their prices, names, daily change, and 52 weeks highs/lows. Pressing the middle button will refresh the prices, they will otherwise update automatically every 15 minutes.
 
-- To pull a stock from an international market you may add `&country=Germany` (or which ever country you prefer) to identify your local exchange
-- If you're displaying forex or crypto, ensure to include `/USD` (or your given currency) as this will be needed to display the price.
-  `#define STOCK_TICKER_LIST "BTC/USD,USD/CAD,XEQT,SPY,APC&country=Germany" // Choose 5 securities to track. You can track forex, crypto (symbol/USD) or stocks from any exchange (if one ticker is part of multiple exchanges you can add on "&country=Canada" to narrow down to your ticker)
-`
+    There are multiple markets/exchanges supported including crypto and forex, the data for this widget is supplied by twelve-data, info on what data you can pull can be found here: <https://twelvedata.com/exchanges?level=grow>. Simply adjust the 5 stocks in the config file to change the ones you'd like to track, separated by commas.
+
+    - To pull a stock from an international market you may add `&country=Germany` (or which ever country you prefer) to identify your local exchange
+    - If you're displaying forex or crypto, ensure to include `/USD` (or your given currency) as this will be needed to display the price.
+
+    ```c
+    #define STOCK_TICKER_LIST "BTC/USD,USD/CAD,XEQT,SPY,APC&country=Germany" // Choose 5 securities to track. You can track forex, crypto (symbol/USD) or stocks from any exchange (if one ticker is part of multiple exchanges you can add on "&country=Canada" to narrow down to your ticker)
+    ```
 
 4. **parqet.com** (Disabled By Default) - A popular financial portfolio tracker in Germany, this widget will give you a beautiful real-time display of your data. To enable, remove the `//` in front of the config line, and enter your portfolio ID in-between the `""`
-   `//#define PARQET_PORTFOLIO_ID "" // set the id of your parqet.com portfolio. Make sure the portfolio is set to public!
-`
+
+   ```c
+   //#define PARQET_PORTFOLIO_ID "" // set the id of your parqet.com portfolio. Make sure the portfolio is set to public!
+   ```
 
 5. **Dynamic Web Data** (Disabled By Default) [advanced users only]- This widget will allow you to make your own custom widget defined by a JSON payload. Further documentation to come.
+
    ```c
    //#define WEB_DATA_WIDGET_URL "" // Use this to make your own widgets using an    API/Webdata source
    ```
@@ -156,6 +167,4 @@ And thats it, goodluck & happy orbin (:
 
 A massive thank you to the community that has helped, this is my first open source project(honestly first project of any sort) so thy help of all you super smart people has just been so so incredible and I couldn't have got this anywhere near where it is now without everyone. Thanks for building this with me. Love ya'll! ♥️
 
-<a href="https://github.com/brett-dot-tech/info-orbs/graphs/contributors">
-<img src="https://contrib.rocks/image?repo=brett-dot-tech/info-orbs" />
-</a>
+[![info-orbs contributors](https://contrib.rocks/image?repo=brett-dot-tech/info-orbs)](https://github.com/brett-dot-tech/info-orbs/graphs/contributors)

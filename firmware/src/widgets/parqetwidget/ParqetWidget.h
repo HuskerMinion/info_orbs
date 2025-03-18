@@ -65,9 +65,6 @@ private:
 
     GlobalTime *m_time;
 
-    unsigned long m_stockDelay = 15 * 60 * 1000; // default to 15m between updates
-    unsigned long m_stockDelayPrev = 0;
-
     unsigned long m_cycleDelay = 30 * 1000; // cycle through pages (for more than 4/5 stocks) every 30 seconds
     unsigned long m_cycleDelayPrev = 0;
 
@@ -99,5 +96,16 @@ private:
     int m_holdingsDisplayFrom = 0;
     boolean m_changed = false;
     boolean m_everDrawn = false; // Track if our widget was ever drawn (to distinguish between an onboot and an onwidget update)
+
+    WidgetTimer &m_drawTimer;
+    WidgetTimer &m_updateTimer;
+
+#ifndef PARQET_UPDATE_DELAY
+    #define PARQET_UPDATE_DELAY TimeFrequency::FifteenMinutes
+#endif
+
+#ifndef PARQET_DRAW_DELAY
+    #define PARQET_DRAW_DELAY TimeFrequency::ThirtySeconds
+#endif
 };
 #endif // PARQET_WIDGET_H

@@ -14,7 +14,10 @@ void MQTTWidget::staticCallback(char *topic, byte *payload, unsigned int length)
 
 // Constructor
 MQTTWidget::MQTTWidget(ScreenManager &manager, ConfigManager &config)
-    : Widget(manager, config), mqttClient(wifiClient) {
+    : Widget(manager, config),
+      m_drawTimer(addDrawRefreshFrequency(MQTT_DRAW_DELAY)),
+      m_updateTimer(addUpdateRefreshFrequency(MQTT_UPDATE_DELAY)),
+      mqttClient(wifiClient) {
 
     // Assign the current instance to the static pointer
     instance = this;

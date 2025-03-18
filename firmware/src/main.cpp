@@ -1,6 +1,7 @@
 #include "GlobalResources.h"
 #include "MainHelper.h"
 #include "clockwidget/ClockWidget.h"
+#include "matrixwidget/MatrixWidget.h"
 #include "mqttwidget/MQTTWidget.h"
 #include "parqetwidget/ParqetWidget.h"
 #include "stockwidget/StockWidget.h"
@@ -40,6 +41,9 @@ void addWidgets() {
 #endif
 #ifdef INCLUDE_MQTT
     widgetSet->add(new MQTTWidget(*sm, *config));
+#endif
+#ifdef INCLUDE_MATRIXSCREEN
+    widgetSet->add(new MatrixWidget(*sm, *config));
 #endif
 }
 

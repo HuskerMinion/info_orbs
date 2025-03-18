@@ -1,4 +1,4 @@
-# Developer Guide for Using ArduinoLog: Log Methods and LOG_LEVEL
+# Developer Guide for Using ArduinoLog
 
 When using the `ArduinoLog` library, the logging methods correspond to different log levels, which help you control the verbosity of your logging output. The log levels are hierarchical, meaning that enabling a specific log level will also enable all log levels above it.
 
@@ -61,7 +61,7 @@ To use logging in your code, include the following:
 
 ### Examples
 
-##### (note: all of these methods have variants without the trailing 'ln' e.g. Log.info(). The difference being the ln variant adds a newline character (\n))
+Note: all of these methods have variants without the trailing 'ln' e.g. Log.info(). The difference being the ln variant adds a newline character (\n))
 
 ```cpp
 Log.infoln("This is an info message.");

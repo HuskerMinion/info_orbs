@@ -22,6 +22,8 @@ public:
     bool initialUpdateDone();
     void initializeAllWidgetsData();
     void setClearScreensOnDrawCurrent();
+    bool isItTimeToDraw();
+    bool isItTimeToUpdate();
 
 private:
     void showCenteredLine(int screen, const String &text);
@@ -34,5 +36,9 @@ private:
     bool m_initialized = false;
 
     void switchWidget();
+
+protected:
+    WidgetTimer *m_drawTimer = nullptr;
+    WidgetTimer *m_updateTimer = nullptr;
 };
 #endif // WIDGET_SET_H

@@ -5,27 +5,34 @@
 #include <ArduinoLog.h>
 #include <iomanip>
 
-StockWidget::StockWidget(ScreenManager &manager, ConfigManager &config) : Widget(manager, config) {
+StockWidget::StockWidget(ScreenManager &manager, ConfigManager &config)
+    : Widget(manager, config),
+      m_drawTimer(addDrawRefreshFrequency(STOCK_DRAW_DELAY)),
+      m_updateTimer(addUpdateRefreshFrequency(STOCK_UPDATE_DELAY)) {
     m_enabled = true; // Enabled by default
     m_config.addConfigBool("StockWidget", "stocksEnabled", &m_enabled, t_enableWidget);
-    config.addConfigString("StockWidget", "stockList", &m_stockList, 200, t_stockList);
+    m_config.addConfigString("StockWidget", "stockList", &m_stockList, 200, t_stockList);
     char stockList[m_stockList.size()];
     strcpy(stockList, m_stockList.c_str());
 
     m_config.addConfigComboBox("StockWidget", "stockchgFmt", &m_stockchangeformat, t_stockChangeFormats, t_stockChangeFormat, true);
+    m_config.addConfigInt("StockWidget", "stockPaginate", &m_switchinterval, t_stockSwitchInterval, true);
 
     char *symbol = strtok(stockList, ",");
     m_stockCount = 0;
     do {
+        if (m_stockCount >= MAX_STOCKS) {
+            Log.warningln("MAX STOCKS UNABLE TO ADD MORE");
+            break;
+        }
         StockDataModel stockModel = StockDataModel();
         stockModel.setSymbol(String(symbol));
         m_stocks[m_stockCount] = stockModel;
         m_stockCount++;
-        if (m_stockCount > MAX_STOCKS) {
-            Log.warningln("MAX STOCKS UNABLE TO ADD MORE");
-            break;
-        }
     } while (symbol = strtok(nullptr, ","));
+    m_pageCount = 1 + ((m_stockCount - 1) / NUM_SCREENS); // int division round up
+    Log.infoln("StockWidget initialized");
+    Log.traceln("StockWidget Pages: %d across %d symbools.", m_pageCount, m_stockCount);
 }
 
 void StockWidget::setup() {
@@ -33,41 +40,48 @@ void StockWidget::setup() {
         Log.warningln("No stock tickers available");
         return;
     }
+    m_prevMillisSwitch = millis();
 }
 
 void StockWidget::draw(bool force) {
     m_manager.setFont(DEFAULT_FONT);
-    for (int8_t i = 0; i < m_stockCount; i++) {
-        if (!m_initialized && !m_stocks[i].getSymbol().isEmpty() && m_stocks[i].getTicker().isEmpty()) {
-            m_manager.selectScreen(i);
-            m_manager.fillScreen(TFT_BLACK);
-            m_manager.setFontColor(TFT_WHITE);
+    for (int8_t i = m_page * NUM_SCREENS; i < (m_page + 1) * NUM_SCREENS; i++) {
+        int8_t displayIndex = i % NUM_SCREENS;
+        if (!m_stocks[i].isInitialized() && !m_stocks[i].getSymbol().isEmpty() && m_stocks[i].getTicker().isEmpty()) {
+            m_manager.selectScreen(displayIndex);
+            m_manager.clearScreen(displayIndex);
+            m_manager.setFontColor(TFT_WHITE, TFT_BLACK);
             m_manager.drawCentreString(I18n::get(t_loadingData), ScreenCenterX, ScreenCenterY, 16);
-        } else if (m_stocks[i].isChanged() || force) {
-            displayStock(i, m_stocks[i], TFT_WHITE, TFT_BLACK);
+        } else if ((m_stocks[i].isChanged() || force) && !m_stocks[i].getSymbol().isEmpty()) {
+            Log.traceln("StockWidget::draw - %s", m_stocks[i].getSymbol().c_str());
+            displayStock(displayIndex, m_stocks[i], TFT_WHITE, TFT_BLACK);
             m_stocks[i].setChangedStatus(false);
+            m_stocks[i].setInitializationStatus(true);
+        } else if (force) {
+            m_manager.selectScreen(displayIndex);
+            m_manager.clearScreen(displayIndex);
         }
     }
-    m_initialized = true;
+
+    if ((millis() - m_prevMillisSwitch >= (m_switchinterval * 1000)) && m_switchinterval > 0) {
+        nextPage();
+    }
 }
 
 void StockWidget::update(bool force) {
-    if (force || m_stockDelayPrev == 0 || (millis() - m_stockDelayPrev) >= m_stockDelay) {
 
-        // Queue requests for each stock
-        for (int8_t i = 0; i < m_stockCount; i++) {
-            String url = "https://api.twelvedata.com/quote?apikey=e03fc53524454ab8b65d91b23c669cc5&symbol=" + m_stocks[i].getSymbol();
+    // Queue requests for each stock
+    for (int8_t i = 0; i < m_stockCount; i++) {
+        Log.traceln("StockWidget::update - %s", m_stocks[i].getSymbol().c_str());
+        String url = "https://api.twelvedata.com/quote?apikey=e03fc53524454ab8b65d91b23c669cc5&symbol=" + m_stocks[i].getSymbol();
 
-            StockDataModel &stock = m_stocks[i];
+        StockDataModel &stock = m_stocks[i];
 
-            auto task = TaskFactory::createHttpGetTask(url, [this, &stock](int httpCode, const String &response) {
-                processResponse(stock, httpCode, response);
-            });
+        auto task = TaskFactory::createHttpGetTask(url, [this, &stock](int httpCode, const String &response) {
+            processResponse(stock, httpCode, response);
+        });
 
-            TaskManager::getInstance()->addTask(std::move(task));
-        }
-
-        m_stockDelayPrev = millis();
+        TaskManager::getInstance()->addTask(std::move(task));
     }
 }
 
@@ -104,6 +118,8 @@ void StockWidget::changeMode() {
 
 void StockWidget::buttonPressed(uint8_t buttonId, ButtonState state) {
     if (buttonId == BUTTON_OK && state == BTN_SHORT)
+        nextPage();
+    else if (buttonId == BUTTON_OK && state == BTN_LONG)
         changeMode();
 }
 
@@ -114,8 +130,7 @@ void StockWidget::displayStock(int8_t displayIndex, StockDataModel &stock, uint3
         return;
     }
     m_manager.selectScreen(displayIndex);
-
-    m_manager.fillScreen(TFT_BLACK);
+    m_manager.clearScreen(displayIndex);
 
     // Calculate center positions
     int screenWidth = SCREEN_SIZE;
@@ -155,6 +170,16 @@ void StockWidget::displayStock(int8_t displayIndex, StockDataModel &stock, uint3
     m_manager.setFontColor(TFT_WHITE, TFT_BLACK);
 
     m_manager.drawString(stock.getCurrencySymbol() + stock.getCurrentPrice(2), centre, 155, bigFontSize, Align::MiddleCenter);
+}
+
+void StockWidget::nextPage() {
+    if (m_pageCount <= 1)
+        return;
+    // Reset the timer for the next page if we just switched manually
+    m_prevMillisSwitch = millis();
+    m_page = (m_page + 1) % m_pageCount;
+    Log.traceln("StockWidget Page: %d", m_page + 1);
+    draw(true);
 }
 
 String StockWidget::getName() {

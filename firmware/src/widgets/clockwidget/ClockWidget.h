@@ -121,9 +121,16 @@ private:
     time_t m_unixEpoch;
     int m_timeZoneOffset;
 
-    // Delays for setting how often certain screens/functions are refreshed/checked. These include both the frequency which they need to be checked and a varibale to store the last checked value.
-    unsigned long m_secondTimer = 1000; // This time is used to refressh/check the clock every second.
-    unsigned long m_secondTimerPrev = 0;
+#ifndef CLOCK_UPDATE_DELAY
+    #define CLOCK_UPDATE_DELAY TimeFrequency::OneSecond
+#endif
+
+#ifndef CLOCK_DRAW_DELAY
+    #define CLOCK_DRAW_DELAY TimeFrequency::OneSecond
+#endif
+
+    WidgetTimer &m_drawTimer;
+    WidgetTimer &m_updateTimer;
 
     int m_minuteSingle;
     int m_hourSingle;

@@ -15,6 +15,7 @@
 #define INCLUDE_PARQET        // include ParqetWidget
 //#define INCLUDE_WEBDATA       // include WebDataWidget
 //#define INCLUDE_MQTT          // include MQTTWidget
+//#define INCLUDE_MATRIXSCREEN	// include MatrixWidget
 
 // NIGHTTIME DIMMING
 //#define DIM_START_HOUR 22  // Dim the screens at this time (24h format)
@@ -34,14 +35,27 @@
 #define DEFAULT_CLOCK ClockType::NORMAL // Set the default clock face: ClockType::NORMAL, ClockType::NIXIE or ClockType::CUSTOM0..9
 //#define CLOCK_FONT DSEG7              // Define clock font (defaults to DSEG7, you can also try DSEG14 or FINAL_FRONTIER)
 
-// WEATHER CONFIGURATION
-#define WEATHER_LOCATION "Victoria, BC" // City/state for the weather, look it up on https://www.visualcrossing.com/weather-data
+// WEATHER CONFIGURATION (ONLY SET ONE FEED TO TRUE)
+#define WEATHER_VISUALCROSSING_FEED true
+#define WEATHER_OPENWEATHERMAP_FEED false
+#define WEATHER_TEMPEST_FEED false
+
 #define WEATHER_SCREEN_MODE Dark        // Can be either Light or Dark
 #define WEATHER_UNITS_METRIC            // Comment this line out (or delete it) if you want imperial units for the weather
 #define HIGH_LOW_INTERVAL 0             // Switch between Highs and Lows on 3 day forecast in X seconds - set to 0 to disable
 
+#define WEATHER_VISUALCROSSING_LOCATION "Victoria, BC" // City/state for the weather, look it up on https://www.visualcrossing.com/weather-data
+
+//#define WEATHER_OPENWEATHERMAP_API_KEY "" // Your OpenWeatherMap API key (get it from https://home.openweathermap.org/users/sign_up)
+//#define WEATHER_OPENWEATHERMAP_LAT "" // Latitude of your location
+//#define WEATHER_OPENWEATHERMAP_LON "" // Longitude of your location
+//#define WEATHER_OPENWEATHERMAP_NAME "Victoria" // Name of your location
+
+//#define WEATHER_TEMPEST_STATION_ID "136542" // Set to the station ID of your Tempest weather station, or find one close to you at https://tempestwx.com/map
+//#define WEATHER_TEMPEST_STATION_NAME "Chicago" // Give your Tempest weather station a name
+
 // STOCK TICKER CONFIGURATION
-#define STOCK_TICKER_LIST "BTC/USD,USD/CAD,XEQT,SPY,APC&country=Germany" // Choose 5 securities to track. You can track forex, crypto (symbol/USD) or stocks from any exchange (if one ticker is part of multiple exchanges you can add on "&country=Canada" to narrow down to your ticker)
+#define STOCK_TICKER_LIST "BTC/USD,USD/CAD,XEQT,SPY,APC&country=Germany" // Choose up to 15 securities to track. You can track forex, crypto (symbol/USD) or stocks from any exchange (if one ticker is part of multiple exchanges you can add on "&country=Canada" to narrow down to your ticker)
 #define STOCK_CHANGE_FORMAT 0           //Show percent change (0) or price change (1)
 
 // PARQET.COM PORTFOLIO CONFIGURATION

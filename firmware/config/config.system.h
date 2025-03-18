@@ -101,20 +101,33 @@
     #define SPI_FREQUENCY 27000000
 #endif
 
-#ifndef TIMEZONE_API_KEY
-    #define TIMEZONE_API_KEY "97R9WKDPBLIO"
-#endif
-
 #ifndef TIMEZONE_API_URL
-    #define TIMEZONE_API_URL "http://api.timezonedb.com/v2.1/get-time-zone"
-#endif
-
-#ifndef WEATHER_API_KEY
-    #define WEATHER_API_KEY "XW2RDGD6XK432AF25BNK2A3C7"
+    #define TIMEZONE_API_URL "https://timeapi.io/api/timezone/zone"
 #endif
 
 #ifndef MAX_RETRIES
     #define MAX_RETRIES 3
+#endif
+
+// WEATHER FEEDS
+#ifndef WEATHER_VISUALCROSSING_FEED
+    #define WEATHER_VISUALCROSSING_FEED true
+#endif
+#ifndef WEATHER_OPENWEATHERMAP_FEED
+    #define WEATHER_OPENWEATHERMAP_FEED false
+#endif
+#ifndef WEATHER_TEMPEST_FEED
+    #define WEATHER_TEMPEST_FEED false
+#endif
+
+#ifndef WEATHER_VISUALCROSSING_API_KEY
+    #define WEATHER_VISUALCROSSING_API_KEY "XW2RDGD6XK432AF25BNK2A3C7"
+#endif
+#ifndef WEATHER_OPENWEATHERMAP_API_KEY
+    #define WEATHER_OPENWEATHERMAP_API_KEY "SOME-KEY-GOES-HERE"
+#endif
+#ifndef WEATHER_TEMPEST_API_KEY
+    #define WEATHER_TEMPEST_API_KEY "20c70eae-e62f-4d3b-b3a4-8586e90f3ac8"
 #endif
 
 #endif

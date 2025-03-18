@@ -1,11 +1,12 @@
 #include "WidgetSet.h"
+#include <ArduinoLog.h>
 
 WidgetSet::WidgetSet(ScreenManager *sm) : m_screenManager(sm) {
 }
 
 void WidgetSet::add(Widget *widget) {
     if (m_widgetCount == MAX_WIDGETS) {
-        Serial.println("MAX WIDGETS UNABLE TO ADD");
+        Log.warningln("MAX WIDGETS UNABLE TO ADD");
         return;
     }
     m_widgets[m_widgetCount] = widget;
@@ -14,17 +15,25 @@ void WidgetSet::add(Widget *widget) {
 }
 
 void WidgetSet::drawCurrent(bool force) {
-    if (m_clearScreensOnDrawCurrent) {
-        m_screenManager->clearAllScreens();
-        m_clearScreensOnDrawCurrent = false;
-        m_widgets[m_currentWidget]->draw(true);
-    } else {
-        m_widgets[m_currentWidget]->draw(force);
+    Widget *currentWidget = m_widgets[m_currentWidget];
+    if (force || currentWidget->isItTimeToDraw()) {
+        Log.traceln("Drawing widget: %s", currentWidget->getName().c_str());
+        if (m_clearScreensOnDrawCurrent) {
+            m_screenManager->clearAllScreens();
+            m_clearScreensOnDrawCurrent = false;
+            currentWidget->draw(true);
+        } else {
+            currentWidget->draw(force);
+        }
     }
 }
 
 void WidgetSet::updateCurrent() {
-    m_widgets[m_currentWidget]->update();
+    Widget *currentWidget = m_widgets[m_currentWidget];
+    if (currentWidget->isItTimeToUpdate()) {
+        Log.traceln("Updating widget: %s", currentWidget->getName().c_str());
+        currentWidget->update();
+    }
 }
 
 Widget *WidgetSet::getCurrent() {
@@ -45,7 +54,6 @@ void WidgetSet::next() {
         m_currentWidget = 0;
     }
     if (!getCurrent()->isEnabled()) {
-        // Recursive call to next()
         next();
     } else {
         switchWidget();
@@ -59,7 +67,6 @@ void WidgetSet::prev() {
         m_currentWidget--;
     }
     if (!getCurrent()->isEnabled()) {
-        // Recursive call to next()
         prev();
     } else {
         switchWidget();
@@ -72,7 +79,7 @@ void WidgetSet::switchWidget() {
     uint32_t start = millis();
     getCurrent()->draw(true);
     uint32_t end = millis();
-    Serial.printf("Drawing of %s took %d ms\n", getCurrent()->getName().c_str(), (end - start));
+    Log.noticeln("Drawing of %s took %d ms", getCurrent()->getName().c_str(), (end - start));
 }
 
 void WidgetSet::showCenteredLine(int screen, const String &text) {
@@ -89,7 +96,7 @@ void WidgetSet::showLoading() {
 void WidgetSet::updateAll() {
     for (uint8_t i = 0; i < m_widgetCount; i++) {
         if (m_widgets[i]->isEnabled()) {
-            Serial.printf("updating widget %s\n", m_widgets[i]->getName().c_str());
+            Log.infoln("updating widget %s", m_widgets[i]->getName().c_str());
             showCenteredLine(4, m_widgets[i]->getName());
             m_widgets[i]->update();
         }

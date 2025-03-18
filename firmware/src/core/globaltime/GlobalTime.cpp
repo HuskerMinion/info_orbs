@@ -13,7 +13,7 @@ GlobalTime::GlobalTime() {
     m_timezoneLocation = cm->getConfigString("timezoneLoc", m_timezoneLocation); // config added in MainHelper
     int clockFormat = cm->getConfigInt("clockFormat", CLOCK_FORMAT); // config added in ClockWidget
     m_ntpServer = cm->getConfigString("ntpServer", m_ntpServer); // config added in MainHelper
-    Serial.printf("GlobalTime initialized, tzLoc=%s, clockFormat=%d, ntpServer=%s\n", m_timezoneLocation.c_str(), clockFormat, m_ntpServer.c_str());
+    Log.infoln("GlobalTime initialized, tzLoc=%s, clockFormat=%d, ntpServer=%s", m_timezoneLocation.c_str(), clockFormat, m_ntpServer.c_str());
     m_format24hour = (clockFormat == CLOCK_FORMAT_24_HOUR);
     m_timeClient = new NTPClient(m_udp, m_ntpServer.c_str(), 0, m_updateInterval);
     m_timeClient->begin();
@@ -28,6 +28,10 @@ GlobalTime *GlobalTime::getInstance() {
         m_instance = new GlobalTime();
     }
     return m_instance;
+}
+
+time_t GlobalTime::getUnixEpochIfAvailable() {
+    return m_instance ? m_instance->getUnixEpoch() : 0;
 }
 
 void GlobalTime::updateTime(bool force) {
@@ -143,31 +147,44 @@ bool GlobalTime::isPM() {
 
 void GlobalTime::getTimeZoneOffsetFromAPI() {
     HTTPClient http;
-    http.begin(String(TIMEZONE_API_URL) + "?key=" + TIMEZONE_API_KEY + "&format=json&fields=gmtOffset,zoneEnd&by=zone&zone=" + String(m_timezoneLocation.c_str()));
+    http.begin(String(TIMEZONE_API_URL) + "?timeZone=" + String(m_timezoneLocation.c_str()));
+
     int httpCode = http.GET();
 
     if (httpCode > 0) {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, http.getString());
         if (!error) {
-            m_timeZoneOffset = doc["gmtOffset"].as<int>();
-            if (doc["zoneEnd"].isNull()) {
-                // Timezone does not use DST, no futher updates necessary
-                m_nextTimeZoneUpdate = 0;
-            } else {
-                // Timezone uses DST, update when necessary
-                m_nextTimeZoneUpdate = doc["zoneEnd"].as<unsigned long>() + random(5 * 60); // Randomize update by 5 minutes to avoid flooding the API
+            m_timeZoneOffset = doc["currentUtcOffset"]["seconds"].as<int>();
+            if (doc["hasDayLightSaving"].as<bool>()) {
+                String dstStart = doc["dstInterval"]["dstStart"].as<String>();
+                String dstEnd = doc["dstInterval"]["dstEnd"].as<String>();
+                bool dstActive = doc["isDayLightSavingActive"].as<bool>();
+                tmElements_t m_temp_t;
+                if (dstActive) {
+                    m_temp_t.Year = dstEnd.substring(0, 4).toInt() - 1970;
+                    m_temp_t.Month = dstEnd.substring(5, 7).toInt();
+                    m_temp_t.Day = dstEnd.substring(8, 10).toInt();
+                    m_temp_t.Hour = dstEnd.substring(11, 13).toInt();
+                    m_temp_t.Minute = dstEnd.substring(14, 16).toInt();
+                    m_temp_t.Second = dstEnd.substring(17, 19).toInt();
+                } else {
+                    m_temp_t.Year = dstStart.substring(0, 4).toInt() - 1970;
+                    m_temp_t.Month = dstStart.substring(5, 7).toInt();
+                    m_temp_t.Day = dstStart.substring(8, 10).toInt();
+                    m_temp_t.Hour = dstStart.substring(11, 13).toInt();
+                    m_temp_t.Minute = dstStart.substring(14, 16).toInt();
+                    m_temp_t.Second = dstStart.substring(17, 19).toInt();
+                }
+                m_nextTimeZoneUpdate = makeTime(m_temp_t) + random(5 * 60); // Randomize update by 5 minutes to avoid flooding the API;
             }
-            Serial.print("Timezone Offset from API: ");
-            Serial.println(m_timeZoneOffset);
-            Serial.print("Next timezone update: ");
-            Serial.println(m_nextTimeZoneUpdate);
+            Log.infoln("Timezone Offset from API: %d; Next timezone update: %d", m_timeZoneOffset, m_nextTimeZoneUpdate);
             m_timeClient->setTimeOffset(m_timeZoneOffset);
         } else {
-            Serial.println("Deserialization error on timezone offset API response");
+            Log.warningln("Deserialization error on timezone offset API response");
         }
     } else {
-        Serial.println("Failed to get timezone offset from API");
+        Log.warningln("Failed to get timezone offset from API");
     }
 }
 

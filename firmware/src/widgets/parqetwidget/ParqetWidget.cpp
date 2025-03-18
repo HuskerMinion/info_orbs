@@ -7,7 +7,10 @@
 #include <TaskFactory.h>
 #include <iomanip>
 
-ParqetWidget::ParqetWidget(ScreenManager &manager, ConfigManager &config) : Widget(manager, config) {
+ParqetWidget::ParqetWidget(ScreenManager &manager, ConfigManager &config)
+    : Widget(manager, config),
+      m_drawTimer(addDrawRefreshFrequency(PARQET_DRAW_DELAY)),
+      m_updateTimer(addUpdateRefreshFrequency(PARQET_UPDATE_DELAY)) {
     Serial.printf("Constructing ParqetWidget, portfolioId=%s\n", m_portfolioId.c_str());
     m_config.addConfigBool("ParqetWidget", "pqEnabled", &m_enabled, t_enableWidget);
     m_config.addConfigString("ParqetWidget", "pqportfoId", &m_portfolioId, 50, t_pqPortfolioId);
@@ -77,14 +80,12 @@ void ParqetWidget::draw(bool force) {
 }
 
 void ParqetWidget::update(bool force) {
-    if (force || m_stockDelayPrev == 0 || (millis() - m_stockDelayPrev) >= m_stockDelay) {
-        Serial.println("Update ParqetPortfolio");
-        if (m_everDrawn && m_showClock) {
-            displayClock(0, TFT_BLACK, TFT_WHITE, "Updating", TFT_RED);
-        }
-        updatePortfolio();
-        m_stockDelayPrev = millis();
+
+    Serial.println("Update ParqetPortfolio");
+    if (m_everDrawn && m_showClock) {
+        displayClock(0, TFT_BLACK, TFT_WHITE, "Updating", TFT_RED);
     }
+    updatePortfolio();
 }
 
 void ParqetWidget::buttonPressed(uint8_t buttonId, ButtonState state) {

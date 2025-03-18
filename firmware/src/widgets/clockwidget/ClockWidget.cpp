@@ -1,7 +1,11 @@
 #include "ClockWidget.h"
+#include "ArduinoLog.h"
 #include "ClockTranslations.h"
 
-ClockWidget::ClockWidget(ScreenManager &manager, ConfigManager &config) : Widget(manager, config) {
+ClockWidget::ClockWidget(ScreenManager &manager, ConfigManager &config)
+    : Widget(manager, config),
+      m_drawTimer(addDrawRefreshFrequency(CLOCK_DRAW_DELAY)),
+      m_updateTimer(addUpdateRefreshFrequency(CLOCK_UPDATE_DELAY)) {
     m_enabled = true; // Always enabled, do not add a config setting for it
     addConfigToManager();
 }
@@ -130,11 +134,6 @@ void ClockWidget::displayAmPm(String &amPm, uint32_t color) {
 }
 
 void ClockWidget::update(bool force) {
-    if (millis() - m_secondTimerPrev < m_secondTimer && !force) {
-        return;
-    }
-
-    m_secondTimerPrev = millis();
 
     GlobalTime *time = GlobalTime::getInstance();
     if (force) {
@@ -276,7 +275,7 @@ void ClockWidget::displayDigit(int displayIndex, const String &lastDigit, const 
     }
     uint32_t end = millis();
 #ifdef CLOCK_DEBUG
-    Serial.printf("displayDigit(%s) took %dms\n", digit, end - start);
+    Log.infoln("displayDigit(%s) took %dms", digit.c_str(), end - start);
 #endif
 }
 

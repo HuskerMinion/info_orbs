@@ -12,3 +12,23 @@ constexpr Translation t_weatherLocation = {
 constexpr Translation t_weatherCycleHL = {
     "Switch between Highs and Lows every X seconds, set to 0 to disable", // EN
 };
+
+constexpr Translation t_tempestStationId = {
+    "Tempest Station ID", // EN
+};
+
+constexpr Translation t_tempestStationName = {
+    "Tempest Station Name", // EN
+};
+
+constexpr Translation t_openWeatherLat = {
+    "OpenWeather Latitude", // EN
+};
+
+constexpr Translation t_openWeatherLong = {
+    "OpenWeather Longitude", // EN
+};
+
+constexpr Translation t_openWeatherName = {
+    "OpenWeather Location Name", // EN
+};

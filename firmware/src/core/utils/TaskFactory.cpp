@@ -10,11 +10,20 @@ void TaskFactory::httpGetTask(const String &url, Task::ResponseCallback callback
 
     {
         HTTPClient http;
-        WiFiClientSecure client;
-        client.setInsecure();
+        bool isHttps = url.startsWith("https://"); // Check if the URL is HTTPS
 
-        http.begin(client, url);
-        http.setTimeout(10000); // 10 second timeout
+        // Declare client outside the conditional blocks
+        WiFiClient *client = nullptr;
+        if (isHttps) {
+            client = new WiFiClientSecure();
+            static_cast<WiFiClientSecure *>(client)->setInsecure(); // Bypass SSL certificate validation
+            http.begin(*client, url); // Use WiFiClientSecure for HTTPS
+        } else {
+            client = new WiFiClient();
+            http.begin(*client, url); // Use WiFiClient for HTTP
+        }
+
+        http.setTimeout(10000); // 10-second timeout
 
         int httpCode = http.GET();
         String response;
@@ -26,13 +35,20 @@ void TaskFactory::httpGetTask(const String &url, Task::ResponseCallback callback
         }
 
         http.end();
-        client.stop();
 
         // Explicitly reset the objects
         http.~HTTPClient(); // Call the destructor
         new (&http) HTTPClient(); // Reinitialize using placement new
-        client.~WiFiClientSecure(); // Call the destructor
-        new (&client) WiFiClientSecure(); // Reinitialize using placement new
+
+        if (isHttps) {
+            static_cast<WiFiClientSecure *>(client)->~WiFiClientSecure(); // Call the destructor
+            new (client) WiFiClientSecure(); // Reinitialize using placement new
+        } else {
+            static_cast<WiFiClient *>(client)->~WiFiClient(); // Call the destructor
+            new (client) WiFiClient(); // Reinitialize using placement new
+        }
+
+        delete client; // Clean up the client object
 
         if (preProcess) {
             preProcess(httpCode, response);
