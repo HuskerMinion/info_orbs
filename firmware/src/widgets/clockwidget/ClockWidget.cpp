@@ -112,18 +112,22 @@ void ClockWidget::draw(bool force) {
     }
 
     if (m_lastDisplay5Digit != m_display5Digit || force) {
+        if (force) m_lastDisplay5Digit = m_display5Digit;
         displayDigit(4, m_lastDisplay5Digit, m_display5Digit, m_fgColor);
         m_lastDisplay5Digit = m_display5Digit;
     }
     if (m_lastDisplay4Digit != m_display4Digit || force) {
+        if (force) m_lastDisplay4Digit = m_display4Digit;
         displayDigit(3, m_lastDisplay4Digit, m_display4Digit, m_fgColor);
         m_lastDisplay4Digit = m_display4Digit;
     }
     if (m_lastDisplay2Digit != m_display2Digit || force) {
+        if (force) m_lastDisplay2Digit = m_display2Digit;
         displayDigit(1, m_lastDisplay2Digit, m_display2Digit, m_fgColor);
         m_lastDisplay2Digit = m_display2Digit;
     }
     if (m_lastDisplay1Digit != m_display1Digit || force) {
+        if (force) m_lastDisplay1Digit = m_display1Digit;
         displayDigit(0, m_lastDisplay1Digit, m_display1Digit, m_fgColor);
         m_lastDisplay1Digit = m_display1Digit;
     }
