@@ -71,3 +71,11 @@ constexpr Translation t_clockSecondsTickColor = {
 constexpr Translation t_clockOverrideColor = {
     "Override Color (black=disable)", // EN
 };
+
+constexpr Translation t_clockMorph = {
+    "Morph clock", // EN
+};
+
+constexpr Translation t_clockMorphRate = {
+    "Morph clock animation rate", // EN
+};
