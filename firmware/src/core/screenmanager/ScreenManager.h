@@ -96,11 +96,19 @@ public:
     void print(String s);
     void print(char c);
 
+    // Additional functions used by MorphClock type
+    void spr_createSprite(int32_t w, int32_t h);
+    void spr_pushSprite(int32_t x, int32_t y);
+    void spr_fillSprite(uint32_t color);
+    void spr_fillRoundRect(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, uint32_t color);
+    void spr_fillCircle(int32_t x, int32_t y, int32_t r, uint32_t color);
+
 private:
     static ScreenManager *instance;
 
     uint8_t m_screen_cs[5] = {SCREEN_1_CS, SCREEN_2_CS, SCREEN_3_CS, SCREEN_4_CS, SCREEN_5_CS};
     TFT_eSPI &m_tft;
+    TFT_eSprite m_spr = TFT_eSprite(&m_tft);
     OpenFontRender m_render;
     TTF_Font m_curFont = TTF_Font::NONE;
     uint8_t m_brightness = TFT_BRIGHTNESS;

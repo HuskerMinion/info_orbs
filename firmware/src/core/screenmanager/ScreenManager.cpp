@@ -401,3 +401,21 @@ JRESULT ScreenManager::drawFsJpg(int32_t x, int32_t y, const char *filename, uin
     m_imageColor = 0;
     return result;
 }
+
+void ScreenManager::spr_createSprite(int32_t w, int32_t h) {
+    m_spr.createSprite(w, h);
+    m_spr.fillSprite(TFT_BLACK);
+}
+
+void ScreenManager::spr_pushSprite(int32_t x, int32_t y) {
+    m_spr.pushSprite(x, y);
+}
+void ScreenManager::spr_fillSprite(uint32_t color) {
+    m_spr.fillSprite(dim(color));
+}
+void ScreenManager::spr_fillRoundRect(int32_t x, int32_t y, int32_t w, int32_t h, int32_t r, uint32_t color) {
+    m_spr.fillRoundRect(x, y, w, h, r, dim(color));
+}
+void ScreenManager::spr_fillCircle(int32_t x, int32_t y, int32_t r, uint32_t color) {
+    m_spr.fillCircle(x, y, r, dim(color));
+}

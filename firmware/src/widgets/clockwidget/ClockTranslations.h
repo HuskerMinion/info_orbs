@@ -19,5 +19,7 @@ extern Translation t_clockOverrideNixieColor;
 extern Translation t_clockEnable;
 extern Translation t_clockSecondsTickColor;
 extern Translation t_clockOverrideColor;
+extern Translation t_clockMorph;
+extern Translation t_clockMorphRate;
 
 #endif // CLOCKTRANSLATIONS_H
