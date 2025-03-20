@@ -69,11 +69,11 @@ private:
     bool m_showBizHours;
 
 #ifndef FIVEZONE_UPDATE_DELAY
-    #define FIVEZONE_UPDATE_DELAY TimeFrequency::OneMinute
+    #define FIVEZONE_UPDATE_DELAY TimeFrequency::ThirtySeconds
 #endif
 
 #ifndef FIVEZONE_DRAW_DELAY
-    #define FIVEZONE_DRAW_DELAY TimeFrequency::OneMinute
+    #define FIVEZONE_DRAW_DELAY TimeFrequency::FifteenSeconds
 #endif
 
     WidgetTimer &m_drawTimer;

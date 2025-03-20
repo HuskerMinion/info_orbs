@@ -15,22 +15,22 @@ FiveZoneWidget::FiveZoneWidget(ScreenManager &manager, ConfigManager &config) : 
 
     for (int i = 0; i < MAX_ZONES; i++) {
         const char *zoneName = strdup((String("5zoZoneName") + String(i)).c_str());
-        const char *zoneDesc = strdup((i18nStr(t_5zoneDesc) + " " + String(i) + ": ").c_str());
-        m_config.addConfigString("FiveZoneWidget", zoneName, &m_timeZones[i].locName, 50, zoneDesc, false);
+        const char *zoneLabel = strdup((i18nStr(t_5zoneLabel) + " " + String(i) + ": ").c_str());
+        m_config.addConfigString("FiveZoneWidget", zoneName, &m_timeZones[i].locName, 50, zoneLabel, false);
 
         const char *zoneTZ = strdup((String("5zoZoneInfo") + String(i)).c_str());
-        const char *zoneTZDesc = strdup((i18nStr(t_5zoneTZDesc) + " " + String(i) + ": ").c_str());
-        m_config.addConfigString("FiveZoneWidget", zoneTZ, &m_timeZones[i].tzInfo, 50, zoneTZDesc, false);
+        const char *zoneTZLabel = strdup((i18nStr(t_5zoneTZLabel) + " " + String(i) + ": ").c_str());
+        m_config.addConfigString("FiveZoneWidget", zoneTZ, &m_timeZones[i].tzInfo, 50, zoneTZLabel, false);
     }
 
     for (int i = 0; i < MAX_ZONES; i++) {
         const char *zoneWorkStart = strdup((String("5zoZoneWstart") + String(i)).c_str());
-        const char *zoneWorkStartDesc = strdup((i18nStr(t_5zoneWorkStartDesc) + " " + String(i) + ": ").c_str());
-        m_config.addConfigInt("FiveZoneWidget", zoneWorkStart, &m_timeZones[i].m_workStart, zoneWorkStartDesc, true);
+        const char *zoneWorkStartLabel = strdup((i18nStr(t_5zoneWorkStartLabel) + " " + String(i) + ": ").c_str());
+        m_config.addConfigInt("FiveZoneWidget", zoneWorkStart, &m_timeZones[i].m_workStart, zoneWorkStartLabel, true);
 
         const char *zoneWorkEnd = strdup((String("5zoZoneWend") + String(i)).c_str());
-        const char *zoneWorkEndDesc = strdup((i18nStr(t_5zoneWorkEndDesc) + " " + String(i) + ": ").c_str());
-        m_config.addConfigInt("FiveZoneWidget", zoneWorkEnd, &m_timeZones[i].m_workEnd, zoneWorkEndDesc, true);
+        const char *zoneWorkEndLabel = strdup((i18nStr(t_5zoneWorkEndLabel) + " " + String(i) + ": ").c_str());
+        m_config.addConfigInt("FiveZoneWidget", zoneWorkEnd, &m_timeZones[i].m_workEnd, zoneWorkEndLabel, true);
     }
     m_format = m_config.getConfigInt("clockFormat", 0);
 }
@@ -74,31 +74,26 @@ void FiveZoneWidget::processResponse(TimeZone &timeZone, int httpCode, const Str
                 Log.warningln("Deserialization error on timezone offset API response");
             }
         } else {
-            Log.warningln("Failed to get timezone offset from API");
+            Log.warningln("Failed to get timezone offset from API : %d", error.c_str());
         }
     }
 }
 
 void FiveZoneWidget::update(bool force) {
     m_time->updateTime(true);
-    int clockStamp = getClockStamp();
+    time_t lv_localEpoch = m_time->getUnixEpoch();
 
-    if (clockStamp != m_clockStampU || force) {
-        m_clockStampU = clockStamp;
-        time_t lv_localEpoch = m_time->getUnixEpoch();
+    for (int i = 0; i < MAX_ZONES; i++) {
+        TimeZone &zone = m_timeZones[i];
+        if (zone.timeZoneOffset == -1 || (zone.nextTimeZoneUpdate > 0 && lv_localEpoch > zone.nextTimeZoneUpdate)) {
 
-        for (int i = 0; i < MAX_ZONES; i++) {
-            TimeZone &zone = m_timeZones[i];
-            if (zone.timeZoneOffset == -1 || (zone.nextTimeZoneUpdate > 0 && lv_localEpoch > zone.nextTimeZoneUpdate)) {
+            String url = String(TIMEZONE_API_URL) + "?timeZone=" + String(zone.tzInfo.c_str());
 
-                String url = String(TIMEZONE_API_URL) + "?timeZone=" + String(zone.tzInfo.c_str());
+            auto task = TaskFactory::createHttpGetTask(url, [this, &zone](int httpCode, const String &response) {
+                processResponse(zone, httpCode, response);
+            });
 
-                auto task = TaskFactory::createHttpGetTask(url, [this, &zone](int httpCode, const String &response) {
-                    processResponse(zone, httpCode, response);
-                });
-
-                TaskManager::getInstance()->addTask(std::move(task));
-            }
+            TaskManager::getInstance()->addTask(std::move(task));
         }
     }
 }
