@@ -69,6 +69,15 @@ void FiveZoneWidget::processResponse(TimeZone &timeZone, int httpCode, const Str
                         m_temp_t.Second = dstStart.substring(17, 19).toInt();
                     }
                     timeZone.nextTimeZoneUpdate = makeTime(m_temp_t) + random(5 * 60); // Randomize update by 5 minutes to avoid flooding the API;
+
+                    int lv_idx = 0;
+                    do {
+                        if (m_timeZones[lv_idx].tzInfo == timeZone.tzInfo) {
+                            m_timeZones[lv_idx].timeZoneOffset = timeZone.timeZoneOffset;
+                            m_timeZones[lv_idx].nextTimeZoneUpdate = timeZone.nextTimeZoneUpdate;
+                        }
+                        lv_idx++;
+                    } while (lv_idx < MAX_ZONES);
                 }
             } else {
                 Log.warningln("Deserialization error on timezone offset API response");
@@ -85,7 +94,15 @@ void FiveZoneWidget::update(bool force) {
 
     for (int i = 0; i < MAX_ZONES; i++) {
         TimeZone &zone = m_timeZones[i];
-        if (zone.timeZoneOffset == -1 || (zone.nextTimeZoneUpdate > 0 && lv_localEpoch > zone.nextTimeZoneUpdate)) {
+            bool lv_dup = false;
+            int lv_idx = 0;
+            do {
+                if ((i != lv_idx) && (m_timeZones[lv_idx].tzInfo == zone.tzInfo))
+                    lv_dup = true;
+                lv_idx++;
+            } while ((lv_idx < i) && !(lv_dup));
+
+            if ((zone.timeZoneOffset == -1 || (zone.nextTimeZoneUpdate > 0 && lv_localEpoch > zone.nextTimeZoneUpdate)) && !lv_dup) {
 
             String url = String(TIMEZONE_API_URL) + "?timeZone=" + String(zone.tzInfo.c_str());
 
