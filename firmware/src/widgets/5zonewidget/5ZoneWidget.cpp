@@ -94,15 +94,15 @@ void FiveZoneWidget::update(bool force) {
 
     for (int i = 0; i < MAX_ZONES; i++) {
         TimeZone &zone = m_timeZones[i];
-            bool lv_dup = false;
-            int lv_idx = 0;
-            do {
-                if ((i != lv_idx) && (m_timeZones[lv_idx].tzInfo == zone.tzInfo))
-                    lv_dup = true;
-                lv_idx++;
-            } while ((lv_idx < i) && !(lv_dup));
+        bool lv_dup = false;
+        int lv_idx = 0;
+        do {
+            if ((i != lv_idx) && (m_timeZones[lv_idx].tzInfo == zone.tzInfo))
+                lv_dup = true;
+            lv_idx++;
+        } while ((lv_idx < i) && !(lv_dup));
 
-            if ((zone.timeZoneOffset == -1 || (zone.nextTimeZoneUpdate > 0 && lv_localEpoch > zone.nextTimeZoneUpdate)) && !lv_dup) {
+        if ((zone.timeZoneOffset == -1 || (zone.nextTimeZoneUpdate > 0 && lv_localEpoch > zone.nextTimeZoneUpdate)) && !lv_dup) {
 
             String url = String(TIMEZONE_API_URL) + "?timeZone=" + String(zone.tzInfo.c_str());
 
