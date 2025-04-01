@@ -304,30 +304,24 @@ bool MainHelper::handleEndpointFetchFilesFromURLAction(
         s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
         s_screenManager->selectScreen(0);
         s_screenManager->drawCentreString("Downloading", ScreenCenterX, ScreenCenterY, 22);
-        s_screenManager->selectScreen(1);
-        if (customClock >= 0) {
-            s_screenManager->drawCentreString("Clockface " + String(customClock), ScreenCenterX, ScreenCenterY, 22);
-        } else {
+        if (!clockName.isEmpty() && !authorName.isEmpty() && customClock >= 0) {
+            // More info for repo downloads
+            s_screenManager->selectScreen(1);
             s_screenManager->drawCentreString("Clockface", ScreenCenterX, ScreenCenterY, 22);
-        }
-        s_screenManager->selectScreen(2);
-        if (!clockName.isEmpty()) {
-            if (!authorName.isEmpty()) {
-                s_screenManager->setFontColor(TFT_DARKGREEN, TFT_BLACK);
-                s_screenManager->drawCentreString(clockName, ScreenCenterX, ScreenCenterY - 40, 22);
-                s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
-                s_screenManager->drawCentreString("by", ScreenCenterX, ScreenCenterY, 18);
-                s_screenManager->setFontColor(TFT_RED, TFT_BLACK);
-                s_screenManager->drawCentreString(authorName, ScreenCenterX, ScreenCenterY + 40, 22);
-            } else {
-                s_screenManager->drawCentreString(clockName, ScreenCenterX, ScreenCenterY, 22);
-            }
+            s_screenManager->selectScreen(2);
+            s_screenManager->setFontColor(TFT_DARKGREEN, TFT_BLACK);
+            s_screenManager->drawCentreString(clockName, ScreenCenterX, ScreenCenterY - 40, 22);
+            s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
+            s_screenManager->drawCentreString("by", ScreenCenterX, ScreenCenterY, 18);
+            s_screenManager->setFontColor(TFT_RED, TFT_BLACK);
+            s_screenManager->drawCentreString(authorName, ScreenCenterX, ScreenCenterY + 40, 22);
+            s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
+            s_screenManager->selectScreen(3);
+            s_screenManager->drawCentreString("from Repo", ScreenCenterX, ScreenCenterY, 22);
         } else {
+            s_screenManager->selectScreen(2);
             s_screenManager->drawCentreString("ClockFace", ScreenCenterX, ScreenCenterY, 22);
         }
-        s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
-        s_screenManager->selectScreen(3);
-        s_screenManager->drawCentreString("from Repo", ScreenCenterX, ScreenCenterY, 22);
     }
     // Download files 0.jpg to 11.jpg
     bool success = true;
