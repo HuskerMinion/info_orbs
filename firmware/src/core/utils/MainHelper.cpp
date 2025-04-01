@@ -7,6 +7,7 @@
 #include <GlobalTime.h>
 #include <HTTPClient.h>
 #include <TimeLib.h>
+#include <clockwidget/ClockWidget.h>
 #include <esp_task_wdt.h>
 #include <nvs_flash.h>
 
@@ -284,29 +285,62 @@ void MainHelper::handleEndpointDownloadFile() {
     }
 }
 
-void MainHelper::handleEndpointFetchFilesFromURL() {
-    String url = s_wifiManager->server->arg("url");
-    String currentDir = s_wifiManager->server->arg("dir");
-    if (url == "" || currentDir == "") {
-        s_wifiManager->server->send(400, "text/html", "<h2>Invalid URL or directory</h2>");
-        return;
+bool MainHelper::handleEndpointFetchFilesFromURLAction(
+    const String &directory, const String &url, const bool showProgress,
+    const int customClock, const String &clockName, const String &authorName, const String &secondHandColor, const String &overrideColor) {
+    String currentUrl = url;
+    Log.noticeln("Fetching files from URL: %s, Directory: %s", url.c_str(), directory.c_str());
+    if (!currentUrl.startsWith("http://") && !currentUrl.startsWith("https://")) {
+        currentUrl = "https://" + currentUrl;
     }
-    if (!url.startsWith("http://") && !url.startsWith("https://")) {
-        url = "https://" + url;
-    }
-    if (url.startsWith("https://github.com")) {
+    if (currentUrl.startsWith("https://github.com")) {
         // Replace GitHub URLs
-        url.replace("github.com", "raw.githubusercontent.com");
-        url.replace("tree", "refs/heads");
+        currentUrl.replace("github.com", "raw.githubusercontent.com");
+        currentUrl.replace("tree", "refs/heads");
     }
-
+    if (showProgress) {
+        s_screenManager->setFont(DEFAULT_FONT);
+        s_screenManager->clearAllScreens();
+        s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
+        s_screenManager->selectScreen(0);
+        s_screenManager->drawCentreString("Downloading", ScreenCenterX, ScreenCenterY, 22);
+        if (!clockName.isEmpty() && !authorName.isEmpty() && customClock >= 0) {
+            // More info for repo downloads
+            s_screenManager->selectScreen(1);
+            s_screenManager->drawCentreString("Clockface", ScreenCenterX, ScreenCenterY, 22);
+            s_screenManager->selectScreen(2);
+            s_screenManager->setFontColor(TFT_DARKGREEN, TFT_BLACK);
+            s_screenManager->drawCentreString(clockName, ScreenCenterX, ScreenCenterY - 40, 22);
+            s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
+            s_screenManager->drawCentreString("by", ScreenCenterX, ScreenCenterY, 18);
+            s_screenManager->setFontColor(TFT_RED, TFT_BLACK);
+            s_screenManager->drawCentreString(authorName, ScreenCenterX, ScreenCenterY + 40, 22);
+            s_screenManager->setFontColor(TFT_WHITE, TFT_BLACK);
+            s_screenManager->selectScreen(3);
+            s_screenManager->drawCentreString("from Repo", ScreenCenterX, ScreenCenterY, 22);
+        } else {
+            s_screenManager->selectScreen(2);
+            s_screenManager->drawCentreString("ClockFace", ScreenCenterX, ScreenCenterY, 22);
+        }
+    }
     // Download files 0.jpg to 11.jpg
+    bool success = true;
+    String outputDir = directory;
+    if (!outputDir.endsWith("/")) {
+        outputDir += "/";
+    }
     for (int i = 0; i <= 11; i++) {
         String fileName = String(i) + ".jpg";
-        String filePath = currentDir + fileName;
-        String fileUrl = url + "/" + fileName;
+        String filePathTemp = outputDir + fileName + ".tmp";
+        String fileUrl = currentUrl + "/" + fileName;
 
-        Log.noticeln("Downloading %s to %s", fileUrl.c_str(), filePath.c_str());
+        Log.noticeln("Downloading %s to %s", fileUrl.c_str(), filePathTemp.c_str());
+        if (showProgress) {
+            s_screenManager->clearScreen(4);
+            // progress message
+            String msg = String(i + 1) + "/12";
+            s_screenManager->drawCentreString(msg, ScreenCenterX, ScreenCenterY, 24);
+        }
 
         HTTPClient http;
         // Initialize HTTP connection
@@ -314,7 +348,8 @@ void MainHelper::handleEndpointFetchFilesFromURL() {
             int httpCode = http.GET();
 
             if (httpCode == HTTP_CODE_OK) {
-                File file = LittleFS.open(filePath, "w");
+                LittleFS.mkdir(outputDir); // Ensure the directory exists
+                File file = LittleFS.open(filePathTemp, "w");
                 if (file) {
                     // Read data from the HTTP stream and write it to the file
                     Stream &stream = http.getStream();
@@ -327,25 +362,113 @@ void MainHelper::handleEndpointFetchFilesFromURL() {
 
                     Log.noticeln("Downloaded: %s (%d)", fileName.c_str(), file.size());
                     file.close();
+                    watchdogReset(); // Kick the Watchdog after every download
                 } else {
-                    Log.errorln("Failed to open file for writing: %s", filePath.c_str());
+                    Log.errorln("Failed to open file for writing: %s", filePathTemp.c_str());
+                    success = false;
+                    break;
                 }
             } else {
                 Log.errorln("Failed to download: %s (HTTP Code: %d)", fileUrl.c_str(), httpCode);
+                success = false;
+                break;
             }
 
             http.end();
         } else {
             Log.errorln("Failed to initialize HTTP connection for: %s", fileUrl.c_str());
+            success = false;
+            break;
         }
     }
 
-    s_wifiManager->server->send(200, "text/html", "<h2>Files downloaded successfully!</h2><a href='/browse?dir=" + currentDir + "'>Back to file list</a>");
+    for (int i = 0; i <= 11; i++) {
+        String fileName = String(i) + ".jpg";
+        String filePath = outputDir + fileName;
+        String filePathTemp = filePath + ".tmp";
+        if (success) {
+            // Rename files
+            Log.noticeln("Renaming %s to %s", filePathTemp.c_str(), filePath.c_str());
+            LittleFS.rename(filePathTemp, filePath);
+        } else {
+            // Remove files
+            Log.warningln("Removing %s", filePathTemp.c_str());
+            LittleFS.remove(filePathTemp);
+        }
+    }
 
-    // Update ClockWidget (we might be showing the changed custom clock)
-    if (s_widgetSet->getCurrent()->getName() == "Clock") {
+    if (showProgress) {
+        s_screenManager->clearScreen(4);
+        if (success) {
+            s_screenManager->setFontColor(TFT_DARKGREEN, TFT_BLACK);
+            s_screenManager->drawCentreString("Success!", ScreenCenterX, ScreenCenterY, 30);
+        } else {
+            s_screenManager->setFontColor(TFT_RED, TFT_BLACK);
+            s_screenManager->drawCentreString("Failed!", ScreenCenterX, ScreenCenterY, 30);
+        }
+        delay(2000);
+    }
+    if (success) {
+        // Switch to clock
+        if (customClock >= 0) {
+            ClockWidget *clockWidget = static_cast<ClockWidget *>(s_widgetSet->getWidgetByName("Clock"));
+            if (clockWidget) {
+                clockWidget->setCustomClock(customClock, secondHandColor, overrideColor); // Change the clock type to the custom clock
+            }
+        }
+        s_widgetSet->switchToWidgetByName("Clock"); // Switch to Clock and force redraw
+        s_widgetCycleDelayPrev = millis(); // Reset the cycle timer
+    } else {
+        // Force redraw
         s_widgetSet->setClearScreensOnDrawCurrent();
     }
+    return success;
+}
+
+void MainHelper::handleEndpointFetchFilesFromURL() {
+    String url = s_wifiManager->server->arg("url");
+    String dir = s_wifiManager->server->arg("dir");
+    if (url == "" || dir == "") {
+        s_wifiManager->server->send(500, "text/html", "<h2>Invalid URL or directory</h2>");
+        return;
+    }
+
+    const bool success = handleEndpointFetchFilesFromURLAction(dir, url, true);
+
+    if (success) {
+        s_wifiManager->server->send(200, "text/html", "<h2>Files downloaded successfully!</h2><a href='/browse?dir=" + dir + "'>Back to file list</a>");
+    } else {
+        s_wifiManager->server->send(500, "text/html", "<h2>Failed to download files!</h2><a href='/browse?dir=" + dir + "'>Back to file list</a>");
+    }
+}
+
+void MainHelper::handleEndpointFetchFilesFromClockRepo() {
+    String url = s_wifiManager->server->arg("url");
+    int customClock = s_wifiManager->server->arg("customClock").toInt();
+    String clockName = s_wifiManager->server->arg("clockName");
+    String authorName = s_wifiManager->server->arg("authorName");
+    String secondHandColor = s_wifiManager->server->arg("secondHandColor");
+    String overrideColor = s_wifiManager->server->arg("overrideColor");
+    Log.noticeln("Fetch files from ClockRepo URL: %s, CustomClock: %d, sHC: %s, oC: %s", url.c_str(), customClock, secondHandColor.c_str(), overrideColor.c_str());
+    bool success = false;
+    if (customClock >= 0 && customClock < USE_CLOCK_CUSTOM) {
+        // Valid
+        String html = WEBPORTAL_FETCHFROMREPO_HTML_START;
+        html += WEBPORTAL_FETCHFROMREPO_STYLE;
+        html += WEBPORTAL_FETCHFROMREPO_SCRIPT;
+        html += WEBPORTAL_FETCHFROMREPO_BODY_START;
+        String dir = "/CustomClock" + String(customClock) + "/";
+        html += "<div>Current Directory: " + dir + "/</div>";
+        html += WEBPORTAL_FETCHFROMREPO_HTML_END;
+        s_wifiManager->server->send(200, "text/html", html);
+        success = handleEndpointFetchFilesFromURLAction(dir, url, true, customClock, clockName, authorName, secondHandColor, overrideColor);
+    } else {
+        Log.errorln("Invalid CustomClock number: %d, max allowed is %d", customClock, USE_CLOCK_CUSTOM - 1);
+        String message = "Invalid CustomClock number " + String(customClock) + ", max allowed is " + String(USE_CLOCK_CUSTOM - 1);
+        message += "\nIncrease USE_CLOCK_CUSTOM if necessary!";
+        s_wifiManager->server->send(500, "text/plain", message);
+    }
+    Log.noticeln("Fetch files from ClockRepo URL: %s, CustomClock: %d, Success: %d", url.c_str(), customClock, success);
 }
 
 void MainHelper::handleEndpointUploadFile() {
@@ -414,6 +537,24 @@ void MainHelper::handleEndpointDeleteFile() {
     }
 }
 
+void MainHelper::handleEndpointCors() {
+    Log.noticeln("CORS request");
+    s_wifiManager->server->sendHeader(HTTP_HEAD_CORS, HTTP_HEAD_CORS_ALLOW_ALL);
+    s_wifiManager->server->sendHeader("Access-Control-Allow-Headers", "content-type");
+    s_wifiManager->server->send(200, "text/plain", "OK");
+}
+
+void MainHelper::handleEndpointPing() {
+    Log.noticeln("Ping request");
+    s_wifiManager->server->sendHeader(HTTP_HEAD_CORS, HTTP_HEAD_CORS_ALLOW_ALL);
+    String status = "{";
+    status += "\"status\": \"OK\"";
+    status += ", \"millis\": " + String(millis());
+    status += ", \"customClocks\": " + String(USE_CLOCK_CUSTOM);
+    status += "}";
+    s_wifiManager->server->send(200, "application/json", status);
+}
+
 void MainHelper::setupWebPortalEndpoints() {
     // To simulate button presses call e.g. http://<ip>/button?name=right&state=short
     s_wifiManager->server->on("/button", handleEndpointButton);
@@ -424,6 +565,11 @@ void MainHelper::setupWebPortalEndpoints() {
     s_wifiManager->server->on(
         "/upload", HTTP_POST, [] { s_wifiManager->server->send(200, "text/html", "<h2>File uploaded successfully!</h2><a href='/browse?dir=" + s_wifiManager->server->arg("dir") + "'>Back to file list</a>"); }, handleEndpointUploadFile);
     s_wifiManager->server->on("/delete", HTTP_GET, handleEndpointDeleteFile);
+
+    // Enable API functions (can be called from anywhere, e.g. the public ClockRepo)
+    s_wifiManager->server->on("/fetchFromClockRepo", HTTP_GET, handleEndpointFetchFilesFromClockRepo);
+    s_wifiManager->server->on("/ping", HTTP_OPTIONS, handleEndpointCors); // CORS
+    s_wifiManager->server->on("/ping", HTTP_GET, handleEndpointPing);
 }
 
 void MainHelper::showWelcome() {

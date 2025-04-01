@@ -116,3 +116,22 @@ void WidgetSet::initializeAllWidgetsData() {
     updateAll();
     m_initialized = true;
 }
+
+Widget *WidgetSet::getWidgetByName(const String &name) {
+    for (uint8_t i = 0; i < m_widgetCount; i++) {
+        if (m_widgets[i]->getName() == name) {
+            return m_widgets[i];
+        }
+    }
+    return nullptr;
+}
+
+void WidgetSet::switchToWidgetByName(const String &name) {
+    for (uint8_t i = 0; i < m_widgetCount; i++) {
+        if (m_widgets[i]->getName() == name) {
+            m_currentWidget = i;
+            switchWidget();
+            break;
+        }
+    }
+}

@@ -87,10 +87,12 @@ public:
     void draw(bool force = false) override;
     void buttonPressed(uint8_t buttonId, ButtonState state) override;
     String getName() override;
+    void setCustomClock(int customClockNo, const String &secondHandColor, const String &overrideColor);
 
 private:
     void addConfigToManager();
     void changeFormat();
+    void changeClockType();
     void displayDigit(int displayIndex, const String &lastDigit, const String &digit, uint32_t color, bool shadowing);
     void displayDigit(int displayIndex, const String &lastDigit, const String &digit, uint32_t color);
     void displaySeconds(int displayIndex, int seconds, int color);
@@ -100,18 +102,20 @@ private:
     void displayNixie(int displayIndex, uint8_t index);
     void displayCustom(int displayIndex, uint8_t clockNumber, uint8_t index);
     void displayClockGraphics(int displayIndex, const byte *clockArray[12][2], uint8_t index, int colorOverride);
-    void changeClockType();
     bool isValidClockType(int clockType);
     bool isCustomClock(int clockType);
+    static String getConfKeyCustEnabled(int custClockNo);
+    static String getConfKeyCustTickColor(int custClockNo);
+    static String getConfKeyCustOverrideColor(int custClockNo);
 
     int m_type = (int) DEFAULT_CLOCK;
-
     int m_format = CLOCK_FORMAT;
     bool m_showSecondTicks = SHOW_SECOND_TICKS;
     int m_fgColor = CLOCK_COLOR;
     int m_shadowColor = CLOCK_SHADOW_COLOR;
     bool m_shadowing = CLOCK_SHADOWING;
     int m_overrideNixieColor = CLOCK_NIXIE_COLOR;
+    bool m_forceNextDraw = false;
 
     // Colors for CustomClocks
     int m_customTickColor[10]{TFT_WHITE, TFT_WHITE, TFT_WHITE, TFT_WHITE, TFT_WHITE, TFT_WHITE, TFT_WHITE, TFT_WHITE, TFT_WHITE, TFT_WHITE};

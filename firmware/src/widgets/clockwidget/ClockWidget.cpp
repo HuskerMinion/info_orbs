@@ -1,6 +1,7 @@
 #include "ClockWidget.h"
 #include "ArduinoLog.h"
 #include "ClockTranslations.h"
+#include <ArduinoLog.h>
 
 ClockWidget::ClockWidget(ScreenManager &manager, ConfigManager &config)
     : Widget(manager, config),
@@ -27,7 +28,7 @@ void ClockWidget::addConfigToManager() {
     // Get enabled setting here to know which clocks are valid,
     // because we did not add the config key for it yet (this happens some lines below)
     for (int i = 0; i < USE_CLOCK_CUSTOM; i++) {
-        String enKey = String("clkCust") + String(i) + "en";
+        String enKey = getConfKeyCustEnabled(i);
         m_customEnabled[i] = m_config.getConfigBool(enKey.c_str(), m_customEnabled[i]);
     }
 #endif
@@ -47,13 +48,13 @@ void ClockWidget::addConfigToManager() {
     for (int i = 0; i < USE_CLOCK_CUSTOM; i++) {
         // We allocate some char buffers here (for the WebPortal GUI) that will never be released
         // but it should not be a problem because this is only done once after boot
-        const char *enKey = strdup((String("clkCust") + String(i) + "en").c_str());
+        const char *enKey = strdup(getConfKeyCustEnabled(i).c_str());
         const char *enDesc = strdup((i18nStr(t_clockCustom) + " " + String(i) + ": " + i18n(t_clockEnable)).c_str());
         m_config.addConfigBool("ClockWidget", enKey, &m_customEnabled[i], enDesc, true);
-        const char *tickKey = strdup((String("clkCust") + String(i) + "tckCol").c_str());
+        const char *tickKey = strdup(getConfKeyCustTickColor(i).c_str());
         const char *tickDesc = strdup((i18nStr(t_clockCustom) + " " + String(i) + ": " + i18nStr(t_clockSecondsTickColor)).c_str());
         m_config.addConfigColor("ClockWidget", tickKey, &m_customTickColor[i], tickDesc, true);
-        const char *overrideKey = strdup((String("clkCust") + String(i) + "ovrCol").c_str());
+        const char *overrideKey = strdup(getConfKeyCustOverrideColor(i).c_str());
         const char *overrideDesc = strdup((i18nStr(t_clockCustom) + " " + String(i) + ": " + i18nStr(t_clockOverrideColor)).c_str());
         m_config.addConfigColor("ClockWidget", overrideKey, &m_customOverrideColor[i], overrideDesc, true);
     }
@@ -68,6 +69,11 @@ void ClockWidget::setup() {
 }
 
 void ClockWidget::draw(bool force) {
+    force = force || m_forceNextDraw;
+    m_forceNextDraw = false;
+    if (force) {
+        m_manager.clearAllScreens();
+    }
     m_manager.setFont(CLOCK_FONT);
     GlobalTime *time = GlobalTime::getInstance();
 
@@ -200,7 +206,35 @@ bool ClockWidget::isValidClockType(int clockType) {
         return false;
 }
 
+void ClockWidget::setCustomClock(int customClockNo, const String &secondHandColor, const String &overrideColor) {
+    if (customClockNo >= 0 && customClockNo < USE_CLOCK_CUSTOM) {
+        Log.noticeln("Switching to custom clock %d, sHC=%s, oC=%s", customClockNo, secondHandColor.c_str(), overrideColor.c_str());
+        // enable clock if necessary
+        m_customEnabled[customClockNo] = true;
+        const String enKey = getConfKeyCustEnabled(customClockNo);
+        m_config.setConfig(enKey.c_str(), true);
+        // set second tick color
+        if (!secondHandColor.isEmpty()) {
+            const auto col = Utils::rgb888htmlToRgb565(secondHandColor);
+            m_customTickColor[customClockNo] = col;
+            const String key = getConfKeyCustTickColor(customClockNo);
+            m_config.setConfig(key.c_str(), col);
+        }
+        // set override color
+        if (!overrideColor.isEmpty()) {
+            const auto col = Utils::rgb888htmlToRgb565(overrideColor);
+            m_customOverrideColor[customClockNo] = col;
+            const String key = getConfKeyCustOverrideColor(customClockNo);
+            m_config.setConfig(key.c_str(), col);
+        }
+        // Select clock
+        m_type = (int) ClockType::CUSTOM0 + customClockNo;
+        m_forceNextDraw = true;
+    }
+}
+
 void ClockWidget::changeClockType() {
+    // Next clockType
     m_type++;
     if (m_type >= CLOCK_TYPE_NUM) {
         m_type = 0;
@@ -209,8 +243,7 @@ void ClockWidget::changeClockType() {
         // Call recursively until a valid clock type is found
         changeClockType();
     } else {
-        m_manager.clearAllScreens();
-        draw(true);
+        m_forceNextDraw = true;
     }
 }
 
@@ -297,8 +330,7 @@ void ClockWidget::displaySeconds(int displayIndex, int seconds, int color) {
             color = 0xfd40;
         }
     } else if (isCustomClock(m_type)) {
-        String tickColorKey = "clkCust" + String(m_type - (int) ClockType::CUSTOM0) + "tckCol";
-        color = m_config.getConfigInt(tickColorKey.c_str(), TFT_WHITE);
+        color = m_customTickColor[m_type - (int) ClockType::CUSTOM0];
     }
     m_manager.selectScreen(displayIndex);
     int startA = ((seconds * 6) + 180 - 3) % 360;
@@ -336,8 +368,7 @@ void ClockWidget::displayNixie(int displayIndex, uint8_t index) {
 
 void ClockWidget::displayCustom(int displayIndex, uint8_t clockNumber, uint8_t index) {
 #if USE_CLOCK_CUSTOM > 0
-    String ovrColorKey = "clkCust" + String(clockNumber) + "ovrCol";
-    int ovrColor = m_config.getConfigInt(ovrColorKey.c_str(), TFT_BLACK);
+    int ovrColor = m_customOverrideColor[clockNumber];
     m_manager.selectScreen(displayIndex);
     String name = "/CustomClock" + String(clockNumber) + "/" + String(index) + ".jpg";
     m_manager.drawFsJpg(0, 0, name.c_str(), 1, ovrColor);
@@ -349,6 +380,18 @@ void ClockWidget::displayClockGraphics(int displayIndex, const byte *clockArray[
     const byte *start = clockArray[index][0];
     const byte *end = clockArray[index][1];
     m_manager.drawJpg(0, 0, start, end - start, 1, colorOverride);
+}
+
+String ClockWidget::getConfKeyCustEnabled(const int custClockNo) {
+    return String("clkCust") + String(custClockNo) + "en";
+}
+
+String ClockWidget::getConfKeyCustTickColor(const int custClockNo) {
+    return String("clkCust") + String(custClockNo) + "tckCol";
+}
+
+String ClockWidget::getConfKeyCustOverrideColor(const int custClockNo) {
+    return String("clkCust") + String(custClockNo) + "ovrCol";
 }
 
 String ClockWidget::getName() {

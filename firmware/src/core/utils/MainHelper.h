@@ -74,6 +74,13 @@ public:
     static void handleEndpointDeleteFile();
     static void handleEndpointDownloadFile();
     static void handleEndpointFetchFilesFromURL();
+    static void handleEndpointFetchFilesFromClockRepo();
+    static bool handleEndpointFetchFilesFromURLAction(
+        const String &directory, const String &url, bool showProgress = false,
+        int customClock = -1, const String &clockName = "", const String &authorName = "",
+        const String &secondHandColor = "", const String &overrideColor = "");
+    static void handleEndpointCors();
+    static void handleEndpointPing();
 
     static void restartIfNecessary();
 
