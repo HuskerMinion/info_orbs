@@ -296,16 +296,53 @@ void ConfigManager::addOnChangeCallback(
 
 void ConfigManager::setConfig(const char *varName, const std::string &value) {
     m_preferences.putString(varName, value.c_str());
+    const auto param = findParameter(varName);
+    if (param != nullptr) {
+        static_cast<StringParameter *>(param->parameter)->setValue(value);
+    }
 }
 
 void ConfigManager::setConfig(const char *varName, const bool value) {
     m_preferences.putBool(varName, value);
+    const auto param = findParameter(varName);
+    if (param != nullptr) {
+        // TODO - not implemented
+        // static_cast<BoolParameter *>(param->parameter)->setValue(value);
+        Log.warningln("Updating BoolParameter is not implemented yet");
+    }
 }
 
 void ConfigManager::setConfig(const char *varName, const int value) {
     m_preferences.putInt(varName, value);
+    const auto param = findParameter(varName);
+    if (param != nullptr) {
+        if (param->type == ParamType::Color) {
+            static_cast<ColorParameter *>(param->parameter)->setValue(value);
+        } else if (param->type == ParamType::ComboBox) {
+            // TODO - not implemented
+            // static_cast<ComboBoxParameter *>(param->parameter)->setValue(value);
+            Log.warningln("Updating ComboBoxParameter is not implemented yet");
+        } else {
+            static_cast<IntParameter *>(param->parameter)->setValue(value);
+        }
+    }
 }
 
 void ConfigManager::setConfig(const char *varName, const float value) {
     m_preferences.putFloat(varName, value);
+    const auto param = findParameter(varName);
+    if (param != nullptr) {
+        static_cast<FloatParameter *>(param->parameter)->setValue(value);
+    }
+}
+
+ConfigManager::Parameter *ConfigManager::findParameter(const char *varName) {
+    for (auto &param : m_parameters) {
+        if (strcmp(param.variableName, varName) == 0) {
+            Log.infoln("Found parameter %s", varName);
+            return &param;
+        }
+    }
+    Log.warningln("Parameter %s not found", varName);
+    return nullptr;
 }

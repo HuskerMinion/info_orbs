@@ -119,6 +119,8 @@ private:
 
     std::string makeKey(const char *section, const char *varName);
     void triggerChangeCallbacks(const char *section, const char *varName = "");
+
+    Parameter *findParameter(const char *varName);
 };
 
 #endif // CONFIG_MANAGER_H

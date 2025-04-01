@@ -211,6 +211,8 @@ void ClockWidget::setCustomClock(int customClockNo, const String &secondHandColo
         Log.noticeln("Switching to custom clock %d, sHC=%s, oC=%s", customClockNo, secondHandColor.c_str(), overrideColor.c_str());
         // enable clock if necessary
         m_customEnabled[customClockNo] = true;
+        const String enKey = getConfKeyCustEnabled(customClockNo);
+        m_config.setConfig(enKey.c_str(), true);
         // set second tick color
         if (!secondHandColor.isEmpty()) {
             const auto col = Utils::rgb888htmlToRgb565(secondHandColor);
