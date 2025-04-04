@@ -1,5 +1,5 @@
-#define BASEBALL_WIDGET_H
-#define BASEBALL_WIDGET_H
+#ifndef BASEBALLWIDGET_H
+#define BASEBALLWIDGET_H
 
 #include <ArduinoJson.h>
 #include <TFT_eSPI.h>
@@ -62,7 +62,7 @@ private:
 
 #ifndef BASEBALL_TEAM_NAME
     #define BASEBALL_TEAM_NAME "Mets"
-#else
+#endif
     std::string m_teamName = BASEBALL_TEAM_NAME;
 
     BaseballDataModel m_teamData;
@@ -73,13 +73,12 @@ private:
     WidgetTimer &m_drawTimer;
     WidgetTimer &m_updateTimer;
 
-    #ifndef BASEBALL_UPDATE_DELAY
-        #define BASEBALL_UPDATE_DELAY TimeFrequency::FifteenMinutes
-    #endif
-
-    #ifndef BASEBALL_DRAW_DELAY
-        #define BASEBALL_DRAW_DELAY TimeFrequency::FiveMinutes
-    #endif
-};
-
+#ifndef BASEBALL_UPDATE_DELAY
+    #define BASEBALL_UPDATE_DELAY TimeFrequency::FifteenMinutes
 #endif
+
+#ifndef BASEBALL_DRAW_DELAY
+    #define BASEBALL_DRAW_DELAY TimeFrequency::FiveMinutes
+#endif
+};
+#endif // BASEBALLWIDGET_H
