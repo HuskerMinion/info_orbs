@@ -12,6 +12,14 @@
 #include "Widget.h"
 #include "config_helper.h"
 
+#ifndef BASEBALL_API_URL
+    #define BASEBALL_API_URL "https://info-orbs-proxy.onrender.com/mlbdata/proxy"
+#endif
+
+#ifndef BASEBALL_TEAM_NAME
+    #define BASEBALL_TEAM_NAME "Mets"
+#endif
+
 class BaseballWidget : public Widget {
 public:
     BaseballWidget(ScreenManager &manager, ConfigManager &config);
@@ -56,13 +64,6 @@ private:
         return baseUrl + "/logo/" + String(m_teamData.getTeamId()) + ".jpg";
     }
 
-#ifndef BASEBALL_API_URL
-    #define BASEBALL_API_URL "https://info-orbs-proxy.onrender.com/mlbdata/proxy"
-#endif
-
-#ifndef BASEBALL_TEAM_NAME
-    #define BASEBALL_TEAM_NAME "Mets"
-#endif
     std::string m_teamName = BASEBALL_TEAM_NAME;
 
     BaseballDataModel m_teamData;
