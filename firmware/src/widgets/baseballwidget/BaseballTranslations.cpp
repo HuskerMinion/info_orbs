@@ -6,12 +6,6 @@ constexpr Translation t_baseballShortName = {
     nullptr, // FR
 };
 
-constexpr Translation t_baseballTeamName = {
-    "Team Information", // EN
-    nullptr, // DE
-    nullptr, // FR
-};
-
 constexpr Translation t_baseballLastGame = {
     "Last Game", // EN
     nullptr, // DE

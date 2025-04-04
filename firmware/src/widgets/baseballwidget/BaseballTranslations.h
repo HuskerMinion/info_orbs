@@ -3,7 +3,6 @@
 
 #include "I18n.h"
 
-extern Translation t_baseballTeamName;
 extern Translation t_baseballLastGame;
 extern Translation t_baseballNextGame;
 extern Translation t_baseballStandings;
