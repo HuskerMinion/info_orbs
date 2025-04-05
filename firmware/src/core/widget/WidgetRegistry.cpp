@@ -1,6 +1,7 @@
 #include "WidgetRegistry.h"
 
-// Include widget headers
+// Include widget headers, always wrap them in a check for WIDGET_DISABLED
+// to avoid including them in the build if they are disabled
 #include "clockwidget/ClockWidget.h"
 #if INCLUDE_WEATHER != WIDGET_DISABLED
     #include "weatherwidget/WeatherWidget.h"
@@ -33,6 +34,7 @@ void registerWidgets(WidgetSet *widgetSet, ScreenManager *sm, ConfigManager *con
     // Always add clock widget
     widgetSet->add(new ClockWidget(*sm, *config));
 
+// Add other widgets based on compile-time flags, and only if they are not disabled
 #if INCLUDE_WEATHER != WIDGET_DISABLED
     widgetSet->add(new WeatherWidget(*sm, *config));
 #endif
