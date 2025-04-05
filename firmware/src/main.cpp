@@ -1,8 +1,8 @@
 #include "GlobalResources.h"
-#include "GlobalTime.h" // Added to declare GlobalTime
+#include "GlobalTime.h"
 #include "MainHelper.h"
 #include "TaskFactory.h"
-#include "WidgetRegistry.h" // New include for widget registration
+#include "WidgetRegistry.h"
 #include "wifiwidget/WifiWidget.h"
 #include <ArduinoLog.h>
 
@@ -57,7 +57,6 @@ void setup() {
 
     globalTime = GlobalTime::getInstance();
 
-    // Register widgets using the WidgetRegistry module
     registerWidgets(widgetSet, sm, config);
 
     config->setupWebPortal();
