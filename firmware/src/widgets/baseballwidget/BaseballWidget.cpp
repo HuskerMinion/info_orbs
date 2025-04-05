@@ -221,7 +221,7 @@ void BaseballWidget::drawTeamLogoScreen(uint16_t primaryColor) {
     } else
         m_manager.fillScreen(TFT_BLACK);
 
-        if (m_hasLogo && m_logoData && m_logoSize > 0) {
+    if (m_hasLogo && m_logoData && m_logoSize > 0) {
         int logoSize = min(contentHeight, SCREEN_SIZE) - 20;
         int logoX = ((SCREEN_SIZE - logoSize) / 2) + 6;
         int logoY = (contentTop + (contentHeight - logoSize) / 2);
