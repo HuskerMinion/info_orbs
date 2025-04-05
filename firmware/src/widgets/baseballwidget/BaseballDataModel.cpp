@@ -65,8 +65,33 @@ BaseballDataModel &BaseballDataModel::setLogoUrl(String logoUrl) {
     }
     return *this;
 }
+
 String BaseballDataModel::getLogoUrl() {
     return m_logoUrl;
+}
+
+BaseballDataModel &BaseballDataModel::setLogoImageFileName(String logoImageFileName) {
+    if (m_logoImageFileName != logoImageFileName) {
+        m_logoImageFileName = logoImageFileName;
+        m_changed = true;
+    }
+    return *this;
+}
+
+String BaseballDataModel::getLogoImageFileName() {
+    return m_logoImageFileName;
+}
+
+BaseballDataModel &BaseballDataModel::setLogoBackgroundColor(String logoBackgroundColor) {
+    if (m_logoBackgroundColor != logoBackgroundColor) {
+        m_logoBackgroundColor = logoBackgroundColor;
+        m_changed = true;
+    }
+    return *this;
+}
+
+String BaseballDataModel::getLogoBackgroundColor() {
+    return m_logoBackgroundColor;
 }
 
 BaseballDataModel &BaseballDataModel::setRecord(String record) {

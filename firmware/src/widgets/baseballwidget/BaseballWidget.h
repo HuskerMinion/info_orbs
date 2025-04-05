@@ -61,7 +61,7 @@ private:
         if (baseUrl.endsWith("/proxy")) {
             baseUrl = baseUrl.substring(0, baseUrl.length() - 6); // Remove last 6 chars ("/proxy")
         }
-        return baseUrl + "/logo/" + String(m_teamData.getTeamId()) + ".jpg";
+        return baseUrl + "/logo/" + const_cast<BaseballDataModel &>(m_teamData).getLogoImageFileName();
     }
 
     std::string m_teamName = BASEBALL_TEAM_NAME;

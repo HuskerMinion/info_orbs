@@ -104,6 +104,8 @@ void BaseballWidget::processResponse(BaseballDataModel &team, int httpCode, cons
             }
             team.setColors(colors);
             team.setLogoUrl(teamObj["logoUrl"].as<String>());
+            team.setLogoImageFileName(teamObj["logoImageFileName"].as<String>());
+            team.setLogoBackgroundColor(teamObj["logoBackgroundColor"].as<String>());
 
             team.setRecord(doc["record"].as<String>());
 
@@ -214,9 +216,12 @@ void BaseballWidget::drawTeamLogoScreen(uint16_t primaryColor) {
     const int contentHeight = SCREEN_SIZE - TOP_BAR_HEIGHT - BOTTOM_BAR_HEIGHT;
     const int center = 120;
 
-    m_manager.fillScreen(TFT_WHITE);
+    if (String(m_teamData.getLogoBackgroundColor()) == "white") {
+        m_manager.fillScreen(TFT_WHITE);
+    } else
+        m_manager.fillScreen(TFT_BLACK);
 
-    if (m_hasLogo && m_logoData && m_logoSize > 0) {
+        if (m_hasLogo && m_logoData && m_logoSize > 0) {
         int logoSize = min(contentHeight, SCREEN_SIZE) - 20;
         int logoX = ((SCREEN_SIZE - logoSize) / 2) + 6;
         int logoY = (contentTop + (contentHeight - logoSize) / 2);

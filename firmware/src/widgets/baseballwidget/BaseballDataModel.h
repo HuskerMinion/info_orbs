@@ -25,6 +25,10 @@ public:
     std::vector<TeamColor> getColors();
     BaseballDataModel &setLogoUrl(String logoUrl);
     String getLogoUrl();
+    BaseballDataModel &setLogoImageFileName(String logoImageFileName);
+    String getLogoImageFileName();
+    BaseballDataModel &setLogoBackgroundColor(String logoBackgroundColor);
+    String getLogoBackgroundColor();
     BaseballDataModel &setRecord(String record);
     String getRecord();
     BaseballDataModel &setDivision(String division);
@@ -73,6 +77,8 @@ private:
     String m_shortName = "";
     std::vector<TeamColor> m_colors;
     String m_logoUrl = "";
+    String m_logoImageFileName = "";
+    String m_logoBackgroundColor = "";
     String m_record = "";
     String m_division = "";
     String m_divisionRank = "";
