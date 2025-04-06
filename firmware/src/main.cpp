@@ -1,13 +1,8 @@
-#include "5zonewidget/5ZoneWidget.h"
 #include "GlobalResources.h"
+#include "GlobalTime.h"
 #include "MainHelper.h"
-#include "clockwidget/ClockWidget.h"
-#include "matrixwidget/MatrixWidget.h"
-#include "mqttwidget/MQTTWidget.h"
-#include "parqetwidget/ParqetWidget.h"
-#include "stockwidget/StockWidget.h"
-#include "weatherwidget/WeatherWidget.h"
-#include "webdatawidget/WebDataWidget.h"
+#include "TaskFactory.h"
+#include "WidgetRegistry.h"
 #include "wifiwidget/WifiWidget.h"
 #include <ArduinoLog.h>
 
@@ -19,39 +14,6 @@ ScreenManager *sm{nullptr};
 ConfigManager *config{nullptr};
 OrbsWiFiManager *wifiManager{nullptr};
 WidgetSet *widgetSet{nullptr};
-
-void addWidgets() {
-    // Always add clock
-    widgetSet->add(new ClockWidget(*sm, *config));
-
-#if INCLUDE_WEATHER != WIDGET_DISABLED
-    widgetSet->add(new WeatherWidget(*sm, *config));
-#endif
-
-#if INCLUDE_STOCK != WIDGET_DISABLED
-    widgetSet->add(new StockWidget(*sm, *config));
-#endif
-#if INCLUDE_PARQET != WIDGET_DISABLED
-    widgetSet->add(new ParqetWidget(*sm, *config));
-#endif
-#if INCLUDE_WEBDATA != WIDGET_DISABLED
-    #ifdef WEB_DATA_WIDGET_URL
-    widgetSet->add(new WebDataWidget(*sm, *config, WEB_DATA_WIDGET_URL));
-    #endif
-    #ifdef WEB_DATA_STOCK_WIDGET_URL
-    widgetSet->add(new WebDataWidget(*sm, *config, WEB_DATA_STOCK_WIDGET_URL));
-    #endif
-#endif
-#if INCLUDE_MQTT != WIDGET_DISABLED
-    widgetSet->add(new MQTTWidget(*sm, *config));
-#endif
-#if INCLUDE_5ZONE != WIDGET_DISABLED
-    widgetSet->add(new FiveZoneWidget(*sm, *config));
-#endif
-#if INCLUDE_MATRIXSCREEN != WIDGET_DISABLED
-    widgetSet->add(new MatrixWidget(*sm, *config));
-#endif
-}
 
 void setup() {
     // Initialize global resources
@@ -94,7 +56,9 @@ void setup() {
     wifiWidget->setup();
 
     globalTime = GlobalTime::getInstance();
-    addWidgets();
+
+    registerWidgets(widgetSet, sm, config);
+
     config->setupWebPortal();
     MainHelper::resetCycleTimer();
 }
