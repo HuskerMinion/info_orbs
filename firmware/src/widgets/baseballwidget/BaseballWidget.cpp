@@ -27,7 +27,11 @@ void BaseballWidget::draw(bool force) {
     if (!m_teamData.isInitialized() && force) {
         m_manager.fillAllScreens(TFT_BLACK);
         m_manager.setFontColor(TFT_WHITE, TFT_BLACK);
-        m_manager.drawCentreString(I18n::get(t_loadingData), ScreenCenterX, ScreenCenterY, 24);
+        for (int8_t i = m_page * NUM_SCREENS; i < (m_page + 1) * NUM_SCREENS; i++) {
+            int8_t displayIndex = i % NUM_SCREENS;
+            m_manager.selectScreen(displayIndex);
+            m_manager.drawCentreString(I18n::get(t_loadingData), ScreenCenterX, ScreenCenterY, 20);
+        }
         return;
     }
 
