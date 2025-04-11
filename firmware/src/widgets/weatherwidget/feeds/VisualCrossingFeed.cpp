@@ -24,7 +24,7 @@ bool VisualCrossingFeed::getWeatherData(WeatherDataModel &model) {
 
     String httpRequestAddress = String(WEATHER_VISUALCROSSING_API_URL) +
                                 String(m_weatherLocation.c_str()) + "/next3days?key=" + apiKey + "&unitGroup=" + tempUnits +
-                                "&include=days,current&iconSet=icons1&lang=" + lang;
+                                "&include=days,current&iconSet=icons1&lang=" + lang + String(WEATHER_VISUALCROSSING_ADDITIONAL_QUERY_PARAMS);
 
     auto task = TaskFactory::createHttpGetTask(
         httpRequestAddress, [this, &model](int httpCode, const String &response) { processResponse(httpCode, response, model); }, [this](int httpCode, String &response) { preProcessResponse(httpCode, response); });

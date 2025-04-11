@@ -10,6 +10,10 @@
     #define WEATHER_VISUALCROSSING_API_URL "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/"
 #endif
 
+#ifndef WEATHER_VISUALCROSSING_ADDITIONAL_QUERY_PARAMS
+    #define WEATHER_VISUALCROSSING_ADDITIONAL_QUERY_PARAMS ""
+#endif
+
 class VisualCrossingFeed : public WeatherFeed {
 public:
     VisualCrossingFeed(const String &apiKey, int units);
