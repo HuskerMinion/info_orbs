@@ -5,6 +5,15 @@
 
 #include <iomanip>
 
+enum Status {
+    STOCK_EMTPY,
+    STOCK_UNINITIALIZED,
+    STOCK_UPDATING,
+    STOCK_READY,
+    STOCK_INVALID,
+    STOCK_ERROR,
+};
+
 class StockDataModel {
 public:
     StockDataModel();
@@ -33,8 +42,8 @@ public:
     String getPercentChange(int8_t digits);
     bool isChanged();
     StockDataModel &setChangedStatus(bool changed);
-    bool isInitialized();
-    StockDataModel &setInitializationStatus(bool initialized);
+    Status getStatus();
+    StockDataModel &setStatus(Status status);
 
 private:
     String m_symbol = "";
@@ -50,7 +59,7 @@ private:
     float m_priceChange = 0.0;
     float m_percentChange = 0.0;
     bool m_changed = false;
-    bool m_initialized = false;
+    Status m_status = STOCK_EMTPY;
 };
 
 #endif // STOCK_DATA_MODEL_H

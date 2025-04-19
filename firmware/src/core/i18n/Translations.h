@@ -14,6 +14,8 @@ extern Translation t_by;
 extern Translation t_brettTech;
 extern Translation t_version;
 extern Translation t_loadingData;
+extern Translation t_error;
+extern Translation t_invalid;
 extern Translation t_enableWidget;
 extern Translation t_timezoneLoc;
 extern Translation t_language;

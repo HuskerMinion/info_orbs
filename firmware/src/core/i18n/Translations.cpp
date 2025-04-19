@@ -44,6 +44,18 @@ constexpr Translation t_loadingData = {
     "Chargement:" // FR
 };
 
+constexpr Translation t_error = {
+    "Error:", // EN
+    "Fehler:", // DE
+    "Erreur:" // FR
+};
+
+constexpr Translation t_invalid = {
+    "Invalid:", // EN
+    "Ungültig:", // DE
+    "Invalide:" // FR
+};
+
 constexpr Translation t_enableWidget = {
     "Enable Widget", // EN
     "Widget aktivieren", // DE

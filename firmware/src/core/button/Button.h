@@ -63,8 +63,8 @@ private:
     volatile bool m_pinLevel;
     volatile ButtonState m_state;
     volatile bool m_hasChanged;
-    volatile unsigned long m_lastPinLevelChange;
-    volatile unsigned long m_pressedSince;
+    volatile unsigned long m_lastPinLevelChange = 0;
+    volatile unsigned long m_pressedSince = 0;
 
     bool has_changed();
 };

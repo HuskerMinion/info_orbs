@@ -27,7 +27,7 @@ public:
 
 private:
     void processResponse(StockDataModel &stock, int httpCode, const String &response);
-    void displayStock(int8_t displayIndex, StockDataModel &stock, uint32_t backgroundColor, uint32_t textColor);
+    void displayStock(int8_t displayIndex, StockDataModel &stock);
     void nextPage();
 
     int8_t m_page = 0;
