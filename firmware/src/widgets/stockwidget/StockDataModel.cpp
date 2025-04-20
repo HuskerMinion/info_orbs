@@ -28,6 +28,7 @@ String StockDataModel::getCurrencySymbol() {
 StockDataModel &StockDataModel::setSymbol(String symbol) {
     if (m_symbol != symbol) {
         m_symbol = String(symbol);
+        m_status = STOCK_UNINITIALIZED;
         // This is not a regular data field so do not mark changed when set
     }
     return *this;
@@ -140,11 +141,12 @@ StockDataModel &StockDataModel::setChangedStatus(bool changed) {
     return *this;
 }
 
-bool StockDataModel::isInitialized() {
-    return m_initialized;
+Status StockDataModel::getStatus() {
+    return m_status;
 }
 
-StockDataModel &StockDataModel::setInitializationStatus(bool initialized) {
-    m_initialized = initialized;
+StockDataModel &StockDataModel::setStatus(Status status) {
+    m_status = status;
+    m_changed = true;
     return *this;
 }

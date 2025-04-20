@@ -48,16 +48,10 @@ void StockWidget::draw(bool force) {
     m_manager.setFont(DEFAULT_FONT);
     for (int8_t i = m_page * NUM_SCREENS; i < (m_page + 1) * NUM_SCREENS; i++) {
         int8_t displayIndex = i % NUM_SCREENS;
-        if (!m_stocks[i].isInitialized() && !m_stocks[i].getSymbol().isEmpty() && m_stocks[i].getTicker().isEmpty()) {
-            m_manager.selectScreen(displayIndex);
-            m_manager.clearScreen(displayIndex);
-            m_manager.setFontColor(TFT_WHITE, TFT_BLACK);
-            m_manager.drawCentreString(I18n::get(t_loadingData), ScreenCenterX, ScreenCenterY, 16);
-        } else if ((m_stocks[i].isChanged() || force) && !m_stocks[i].getSymbol().isEmpty()) {
+        if ((m_stocks[i].isChanged() || force) && !m_stocks[i].getStatus() == STOCK_EMTPY) {
             Log.traceln("StockWidget::draw - %s", m_stocks[i].getSymbol().c_str());
-            displayStock(displayIndex, m_stocks[i], TFT_WHITE, TFT_BLACK);
+            displayStock(displayIndex, m_stocks[i]);
             m_stocks[i].setChangedStatus(false);
-            m_stocks[i].setInitializationStatus(true);
         } else if (force) {
             m_manager.selectScreen(displayIndex);
             m_manager.clearScreen(displayIndex);
@@ -87,29 +81,35 @@ void StockWidget::update(bool force) {
 }
 
 void StockWidget::processResponse(StockDataModel &stock, int httpCode, const String &response) {
-    if (httpCode > 0) {
+    // https://twelvedata.com/docs#errors
+
+    if (httpCode == 200) {
         JsonDocument doc;
         DeserializationError error = deserializeJson(doc, response);
 
         if (!error) {
-            float currentPrice = doc["close"].as<float>();
-            if (currentPrice > 0.0) {
-                stock.setCurrentPrice(doc["close"].as<float>());
-                stock.setPercentChange(doc["percent_change"].as<float>() / 100);
-                stock.setPriceChange(doc["change"].as<float>());
-                stock.setHighPrice(doc["fifty_two_week"]["high"].as<float>());
-                stock.setLowPrice(doc["fifty_two_week"]["low"].as<float>());
-                stock.setCompany(doc["name"].as<String>());
-                stock.setTicker(doc["symbol"].as<String>());
-                stock.setCurrencySymbol(doc["currency"].as<String>());
+            if (doc["code"] == 404) {
+                Log.warningln("The specified data can not be found: %s", stock.getSymbol().c_str());
+                stock.setStatus(STOCK_INVALID);
+                return;
             } else {
-                Log.warningln("skipping invalid data for: %s", stock.getSymbol().c_str());
+                stock.setCurrentPrice(doc["close"].as<float>())
+                    .setPercentChange(doc["percent_change"].as<float>() / 100)
+                    .setPriceChange(doc["change"].as<float>())
+                    .setHighPrice(doc["fifty_two_week"]["high"].as<float>())
+                    .setLowPrice(doc["fifty_two_week"]["low"].as<float>())
+                    .setCompany(doc["name"].as<String>())
+                    .setTicker(doc["symbol"].as<String>())
+                    .setCurrencySymbol(doc["currency"].as<String>())
+                    .setStatus(STOCK_READY);
             }
         } else {
             Log.errorln("deserializeJson() failed");
+            stock.setStatus(STOCK_ERROR);
         }
     } else {
         Log.errorln("HTTP request failed, error: %d\n", httpCode);
+        stock.setStatus(STOCK_ERROR);
     }
 }
 
@@ -124,53 +124,75 @@ void StockWidget::buttonPressed(uint8_t buttonId, ButtonState state) {
         changeMode();
 }
 
-void StockWidget::displayStock(int8_t displayIndex, StockDataModel &stock, uint32_t backgroundColor, uint32_t textColor) {
+void StockWidget::displayStock(int8_t displayIndex, StockDataModel &stock) {
     Log.infoln("displayStock - %s ~ %s", stock.getSymbol().c_str(), stock.getCurrentPrice(2).c_str());
-    if (stock.getCurrentPrice() == 0.0) {
-        // There isn't any data to display yet
-        return;
-    }
     m_manager.selectScreen(displayIndex);
     m_manager.clearScreen(displayIndex);
-
-    // Calculate center positions
-    int screenWidth = SCREEN_SIZE;
-    int centre = 120;
-    int arrowOffsetX = 0;
-    int arrowOffsetY = -109;
-
-    // Outputs
-    m_manager.fillRect(0, 70, screenWidth, 49, TFT_WHITE);
-    m_manager.fillRect(0, 111, screenWidth, 20, TFT_LIGHTGREY);
-    int smallFontSize = 11;
-    int bigFontSize = 29;
-    m_manager.setFontColor(TFT_WHITE, TFT_BLACK);
-    m_manager.drawCentreString(i18n(t_stock52week), centre, 185, smallFontSize);
-    m_manager.drawCentreString(i18nStr(t_highShort) + ": " + stock.getCurrencySymbol() + stock.getHighPrice(), centre, 200, smallFontSize);
-    m_manager.drawCentreString(i18nStr(t_lowShort) + ": " + stock.getCurrencySymbol() + stock.getLowPrice(), centre, 215, smallFontSize);
-    m_manager.setFontColor(TFT_BLACK, TFT_LIGHTGREY);
-    m_manager.drawString(stock.getCompany(), centre, 121, smallFontSize, Align::MiddleCenter);
-    if (stock.getPercentChange() < 0.0) {
-        m_manager.setFontColor(TFT_RED, TFT_BLACK);
-        m_manager.fillTriangle(110 + arrowOffsetX, 120 + arrowOffsetY, 130 + arrowOffsetX, 120 + arrowOffsetY, 120 + arrowOffsetX, 132 + arrowOffsetY, TFT_RED);
-        m_manager.drawArc(centre, centre, 120, 118, 0, 360, TFT_RED, TFT_RED);
-    } else {
-        m_manager.setFontColor(TFT_GREEN, TFT_BLACK);
-        m_manager.fillTriangle(110 + arrowOffsetX, 132 + arrowOffsetY, 130 + arrowOffsetX, 132 + arrowOffsetY, 120 + arrowOffsetX, 120 + arrowOffsetY, TFT_GREEN);
-        m_manager.drawArc(centre, centre, 120, 118, 0, 360, TFT_GREEN, TFT_GREEN);
-    }
-    if (!m_stockchangeformat) {
-        m_manager.drawString(stock.getPercentChange(2) + "%", centre, 48, bigFontSize, Align::MiddleCenter);
-    } else {
-        m_manager.drawString(stock.getCurrencySymbol() + stock.getPriceChange(2), centre, 48, bigFontSize, Align::MiddleCenter);
-    }
-    // Draw stock data
-    m_manager.setFontColor(TFT_BLACK, TFT_WHITE);
-
-    m_manager.drawString(stock.getTicker(), centre, 92, bigFontSize, Align::MiddleCenter);
     m_manager.setFontColor(TFT_WHITE, TFT_BLACK);
 
-    m_manager.drawString(stock.getCurrencySymbol() + stock.getCurrentPrice(2), centre, 155, bigFontSize, Align::MiddleCenter);
+    switch (stock.getStatus()) {
+    case STOCK_UNINITIALIZED:
+        m_manager.setFontColor(TFT_BLUE);
+        m_manager.drawCentreString(i18nStr(t_loadingData), ScreenCenterX, ScreenCenterY - 30, 16);
+        m_manager.drawCentreString(stock.getSymbol(), ScreenCenterX, ScreenCenterY, 16);
+        break;
+
+    case STOCK_INVALID:
+        m_manager.setFontColor(TFT_RED);
+        m_manager.drawCentreString(i18nStr(t_invalid), ScreenCenterX, ScreenCenterY - 30, 16);
+        m_manager.drawCentreString(stock.getSymbol(), ScreenCenterX, ScreenCenterY, 16);
+        break;
+
+    case STOCK_ERROR:
+        m_manager.setFontColor(TFT_RED);
+        m_manager.drawCentreString(i18nStr(t_error), ScreenCenterX, ScreenCenterY - 30, 16);
+        m_manager.drawCentreString(stock.getSymbol(), ScreenCenterX, ScreenCenterY, 16);
+        if (not stock.getCurrentPrice() > 0.0) {
+            // Only break if we don't have data.  better to display something if we have it
+            break;
+        }
+
+    case STOCK_READY:
+        // Calculate center positions
+        int screenWidth = SCREEN_SIZE;
+        int centre = 120;
+        int arrowOffsetX = 0;
+        int arrowOffsetY = -109;
+
+        // Outputs
+        m_manager.fillRect(0, 70, screenWidth, 49, TFT_WHITE);
+        m_manager.fillRect(0, 111, screenWidth, 20, TFT_LIGHTGREY);
+        int smallFontSize = 11;
+        int bigFontSize = 29;
+        m_manager.setFontColor(TFT_WHITE, TFT_BLACK);
+        m_manager.drawCentreString(i18n(t_stock52week), centre, 185, smallFontSize);
+        m_manager.drawCentreString(i18nStr(t_highShort) + ": " + stock.getCurrencySymbol() + stock.getHighPrice(), centre, 200, smallFontSize);
+        m_manager.drawCentreString(i18nStr(t_lowShort) + ": " + stock.getCurrencySymbol() + stock.getLowPrice(), centre, 215, smallFontSize);
+        m_manager.setFontColor(TFT_BLACK, TFT_LIGHTGREY);
+        m_manager.drawString(stock.getCompany(), centre, 121, smallFontSize, Align::MiddleCenter);
+        if (stock.getPercentChange() < 0.0) {
+            m_manager.setFontColor(TFT_RED, TFT_BLACK);
+            m_manager.fillTriangle(110 + arrowOffsetX, 120 + arrowOffsetY, 130 + arrowOffsetX, 120 + arrowOffsetY, 120 + arrowOffsetX, 132 + arrowOffsetY, TFT_RED);
+            m_manager.drawArc(centre, centre, 120, 118, 0, 360, TFT_RED, TFT_RED);
+        } else {
+            m_manager.setFontColor(TFT_GREEN, TFT_BLACK);
+            m_manager.fillTriangle(110 + arrowOffsetX, 132 + arrowOffsetY, 130 + arrowOffsetX, 132 + arrowOffsetY, 120 + arrowOffsetX, 120 + arrowOffsetY, TFT_GREEN);
+            m_manager.drawArc(centre, centre, 120, 118, 0, 360, TFT_GREEN, TFT_GREEN);
+        }
+        if (!m_stockchangeformat) {
+            m_manager.drawString(stock.getPercentChange(2) + "%", centre, 48, bigFontSize, Align::MiddleCenter);
+        } else {
+            m_manager.drawString(stock.getCurrencySymbol() + stock.getPriceChange(2), centre, 48, bigFontSize, Align::MiddleCenter);
+        }
+        // Draw stock data
+        m_manager.setFontColor(TFT_BLACK, TFT_WHITE);
+        m_manager.drawString(stock.getTicker(), centre, 92, bigFontSize, Align::MiddleCenter);
+
+        m_manager.setFontColor(TFT_WHITE, TFT_BLACK);
+        m_manager.drawString(stock.getCurrencySymbol() + stock.getCurrentPrice(2), centre, 155, bigFontSize, Align::MiddleCenter);
+
+        break;
+    }
 }
 
 void StockWidget::nextPage() {
