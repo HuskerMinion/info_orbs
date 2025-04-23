@@ -1,6 +1,7 @@
 #include "5zonewidget/5ZoneWidget.h"
 #include "GlobalResources.h"
 #include "MainHelper.h"
+#include "baseballwidget/BaseballWidget.h"
 #include "clockwidget/ClockWidget.h"
 #include "matrixwidget/MatrixWidget.h"
 #include "mqttwidget/MQTTWidget.h"
@@ -50,6 +51,9 @@ void addWidgets() {
 #endif
 #if INCLUDE_MATRIXSCREEN != WIDGET_DISABLED
     widgetSet->add(new MatrixWidget(*sm, *config));
+#endif
+#if INCLUDE_BASEBALL != WIDGET_DISABLED
+    widgetSet->add(new BaseballWidget(*sm, *config));
 #endif
 }
 
